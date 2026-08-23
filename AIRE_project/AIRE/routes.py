@@ -63,22 +63,25 @@ def chat():
     # --- LABEL MAPPING ---
     mapped_sentence = map_label_to_response(label, greet_res)
 
-    token = str(uuid.uuid4())[:8].upper()
-    REQUIREMENTS_STORE[token] = {
-        "text": requirement_text,
-        "label": label,
-        "confidence": confidence,
-    }
+    token = "Not set"
 
     # --- ROUTING LOGIC (per project spec) ---
     if label == 'greeting':
         reply_text = mapped_sentence
         status = "Greet"
-    elif confidence >= CONFIDENCE_THRESHOLD:
+    elif confidence > 0:
         # Confident enough to ask a clarifying question back to the client
         reply_text = mapped_sentence
         status = "clarify"
     else:
+        token = str(uuid.uuid4())[:8].upper()
+        # Storing into DB
+        REQUIREMENTS_STORE[token] = {
+            # inside here we have to store the result_df in the Final_Production.ipynb with Q&A
+            "text": requirement_text,
+            "label": label,
+            "confidence": confidence,
+        }
         # Not confident - log it and tell the client we'll follow up
         reply_text = f"Thanks! We've logged your requirement (Token: {token}). Our team will contact you shortly."
         status = "queued"

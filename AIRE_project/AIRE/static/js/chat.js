@@ -12,6 +12,7 @@ function scrollToBottom() {
   thread.scrollTop = thread.scrollHeight;
 }
 
+// Client message
 function addUserMessage(text) {
   const msg = document.createElement("div");
   msg.className = "msg msg--user";
@@ -24,6 +25,7 @@ function addUserMessage(text) {
   scrollToBottom();
 }
 
+// Bot message
 function addThinkingBubble() {
   const msg = document.createElement("div");
   msg.className = "msg msg--bot";

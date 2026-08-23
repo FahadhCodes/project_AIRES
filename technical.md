@@ -117,3 +117,132 @@
 | [x] l     | Instead of list of words ex:- `['Hi', 'Hello', 'Namasthe']` generating `spacy` synonims so that's can more intelligence                          |
 | [ ] l     | Like the `greet()` function, introducing new functionality that select suitable question response once the Bot detect the lacks in requirenments |
 | [ ] l     | Still trying yo implement the forms and labeled text box for collect information more pricisely.                                                 |
+
+# Ambiguity intelligence
+
+---
+
+**10/08/2026 - Log**
+
+---
+
+Today I was created a Multilty Task Learning `Deep Neural Network` Model which is trained using `Cornelius_2025_user_story_ambiguity_dataset`, It has Lot's of class imbalance spesifically in the `Ambiguity = True` Dataset, however I find more effective threshold value for each of the ambiguity type and uses `Synthetic Data sets` with the support of LLMs like `Chat-GPT` and `Grok`
+
+For feature extration from the text I used `sentence-transformer/all-MiniLM-L6-v2` `huggin-face` model.
+
+# Constructing Chat-Bot Respose
+
+---
+
+**20/08/2026 - Log**
+
+---
+
+With those models I constructed a Structured Dictionary:
+
+```Python
+{
+    'domain':'',
+    'text' : {
+        'id1':{
+          'sentence':'string',
+          'requirement_type': 'Functional',
+          'requiremnt_type_confidance':float
+        },
+        'id2':{
+          'sentence':'string',
+          'requirement_type': 'non-Functional',
+          'requiremnt_type_confidance':float
+        },
+        'id2':{
+          'sentence':'string',
+          'requirement_type': 'Functional',
+          'requiremnt_type_confidance':float
+        },
+    },
+    # SemanticAmbiguity,ScopeAmbiguity,ActorAmbiguity <--- if these three are None that is not gonna included into this JSON
+    'requirements':{
+        'Performance' : {
+            'NumbersOfSentances' : num,
+            'SemanticAmbiguity' : ['id1','id2'],
+            'ScopeAmbiguity' : ['id1','id2'],
+            'ActorAmbiguity' : ['id1','id2'],
+        },
+        'Usability' : {
+            'NumbersOfSentances' : num,
+            'SemanticAmbiguity' : ['id1','id2'],
+            'ScopeAmbiguity' : ['id1','id2'],
+            'ActorAmbiguity' : ['id1','id2'],
+        },
+        'Security' : {
+            'SemanticAmbiguity' : ['id1','id2'],
+            'ScopeAmbiguity' : ['id1','id2'],
+            'ActorAmbiguity' : ['id1','id2'],
+        },
+        'Functional' : {
+            'NumbersOfSentances' : num,
+            'SemanticAmbiguity' : ['id1','id2'],
+            'ScopeAmbiguity' : ['id1','id2'],
+            'ActorAmbiguity' : ['id1','id2'],
+        },
+        'Operational' : {
+            'NumbersOfSentances' : num,
+            'SemanticAmbiguity' : ['id1','id2'],
+            'ScopeAmbiguity' : ['id1','id2'],
+            'ActorAmbiguity' : ['id1','id2'],
+        },
+        'Non-Functional' : {
+            'NumbersOfSentances' : num,
+            'SemanticAmbiguity' : ['id1','id2'],
+            'ScopeAmbiguity' : ['id1','id2'],
+            'ActorAmbiguity' : ['id1','id2'],
+        },
+    }
+}
+```
+
+Generate some templates with `Chat-GPT` for client friendly chat-bot response:
+
+- AMBIGUITY_INITIAL_PROMPTS
+- AMBIGUITY_DESCRIPTIONS
+- AMBIGUITY_CLARIFICATION_QUESTIONS
+
+Finally I construct a template based chat-bot respose:
+
+```cmd
+Detected Ambiguities(Interactive Labels) : ['ActorAmbiguity', 'SemanticAmbiguity', 'ScopeAmbiguity']
+
+Your requirement has unclear boundaries, so it is not clear exactly what is included. It contains unclear or subjective terms that may be understood differently. It does not clearly identify who should perform this action.
+
+Specifically, You have mentioned,
+
+    -----------------------------------------------------------------------------
+    administrators should handle problems reported by customers and monitor the performance of sellers.
+    -----------------------------------------------------------------------------
+    In here actually,
+(1) What exactly do you mean by this term or phrase?
+(2) Could you provide a specific example of what you expect?
+(3) Can you replace this general term with a specific value, condition, or time?
+(4) What specific result would you consider acceptable?
+(5) How would you describe this requirement so that everyone understands it in the same way?
+
+    -----------------------------------------------------------------------------
+    we operate an online marketplace with many sellers. customers should be able to find products and place orders, while sellers need to manage the products they offer and update their orders. the company also wants reports to understand sales activity. administrators should handle problems reported by customers and monitor the performance of sellers.
+    -----------------------------------------------------------------------------
+    In here actually,
+(1) What exactly should this feature include?
+(2) Who should this requirement apply to?
+(3) Are there any users, activities, or situations that should be excluded?
+(4) Are there any limits or conditions on when this feature should be used?
+(5) What should the system do outside the scope of this requirement?
+
+    -----------------------------------------------------------------------------
+    we operate an online marketplace with many sellers.
+    -----------------------------------------------------------------------------
+    In here actually,
+(1) Who should perform this action?
+(2) Which user role or staff member is responsible for this activity?
+(3) Who should be allowed to use this feature?
+(4) Can more than one role perform this action?
+(5) Who should be responsible when this action requires approval?
+```

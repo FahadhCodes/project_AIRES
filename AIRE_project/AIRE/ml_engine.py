@@ -13,7 +13,7 @@ Contract this function must honor (so app.py never needs to change):
     }
 """
 import random
-from AIRE.vocab import greet, Vocab
+from AIRE.vocab import greet, Vocab, base_requirement_table, response_constructor, bot_response
 import json
 import spacy
 
@@ -32,16 +32,44 @@ def classify_requirement(requirement_text: str) -> dict:
     confidence = round(random.uniform(0.60, 0.99), 2)
     # label = random.choice(list(QUES))
     doc = nlp(requirement_text)
-    if data['max_similarity_value'] > 0.5 and len(doc) < 7:
+    keys = list(Vocab["respons"]["question"].keys())  # Question Keys
+
+    if data['max_similarity_value'] > 0.75 and len(doc) < 7:
         confidence = 0
         label = "greeting"
         res = data['response']
-    else:
-        keys = list(Vocab["respons"]["question"].keys())
-        print(keys)
+        condition_id = 'A'
+    elif data['max_similarity_value'] > 0.75 and len(doc) > 7:
         label = random.choice(keys)
-        res = 'Could you explain further🤔?'
-    print("DEBUGGING|||||||||:", label, confidence)
+        greet_res = data['response']
+        results_df = base_requirement_table(requirement_text)
+        final_dict = response_constructor(results_df)
+        confidence = final_dict['total_ambiguity']
+        # res = f'''
+        #     {greet_res},
+        #     {bot_response(final_dict)}
+        # '''
+        res = final_dict
+        condition_id = 'B'
+    else:
+        label = random.choice(keys)
+        results_df = base_requirement_table(requirement_text)
+        final_dict = response_constructor(results_df)
+        confidence = final_dict['total_ambiguity']
+        # res = f'''
+        #     {greet_res},
+        #     {bot_response(final_dict)}
+        # '''
+        res = final_dict
+        condition_id = 'C'
+    # ----------------------------------------------------------------
+    print(f'''DEBUGGING: 
+                      Conversation Direction : {label} 
+                      Confidance Score of requirenment :{confidence}
+                      Similarity Value :{data['max_similarity_value']}
+                      Condition ID :{condition_id}
+    ''')
+    # ----------------------------------------------------------------
     return {
         "confidence": confidence,
         "label": label,

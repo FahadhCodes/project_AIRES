@@ -136,6 +136,132 @@
       "3": "Please provide a specific target date.",
       "4": "Can you specify the expected response time for this feature?",
       "5": "Should this requirement apply to all user roles or a specific one?"
+    },
+    "AMBIGUITY_TYPE": [
+      "Semantic Ambiguity",
+      "Scope Ambiguity",
+      "Actor Ambiguity",
+      "Acceptance Ambiguity",
+      "Dependency Ambiguity",
+      "Priority Ambiguity",
+      "Technical Ambiguity"
+    ],
+
+    "AMBIGUITY_INITIAL_PROMPTS": {
+      "SemanticAmbiguity": "Your requirement contains unclear or subjective terms that may be understood differently.",
+
+      "ScopeAmbiguity": "Your requirement has unclear boundaries, so it is not clear exactly what is included.",
+
+      "ActorAmbiguity": "Your requirement does not clearly identify who should perform this action.",
+
+      "AcceptanceAmbiguity": "Your requirement does not clearly explain how we can decide whether the result is successful.",
+
+      "DependencyAmbiguity": "Your requirement depends on another person, process, system, or event that is not clearly specified.",
+
+      "PriorityAmbiguity": "Your requirement does not clearly indicate how important or urgent it is.",
+
+      "TechnicalAmbiguity": "Your requirement mentions a technical operation without clearly specifying what is expected."
+    },
+    "AMBIGUITY_DESCRIPTIONS": {
+      "SemanticAmbiguity": [
+        "Some words or phrases in your requirement are too general or subjective.",
+        "Different people may understand these words or phrases differently.",
+        "Words such as 'quickly', 'regularly', 'reasonable', or 'appropriate' do not provide a specific expectation."
+      ],
+
+      "ScopeAmbiguity": [
+        "The main purpose of the requirement is understandable, but its boundaries are unclear.",
+        "It may not be clear exactly how far the requirement should apply.",
+        "It may be unclear which users, activities, situations, or features are included."
+      ],
+
+      "ActorAmbiguity": [
+        "The requirement describes an action, but it does not clearly identify who is responsible for performing it.",
+        "Words such as 'user', 'staff', or 'employee' may refer to different people or roles.",
+        "The responsible person or role should be clearly identified."
+      ],
+
+      "AcceptanceAmbiguity": [
+        "The requirement explains what should happen, but does not clearly explain how success will be determined.",
+        "It may be difficult to decide whether the completed feature actually meets the requirement.",
+        "Clear conditions or expected results are needed so everyone can agree when the requirement is complete."
+      ],
+
+      "DependencyAmbiguity": [
+        "The requirement relies on something else, such as another person, process, system, approval, or event.",
+        "It is not clear what needs to happen before this requirement can be completed.",
+        "It may also be unclear what should happen after the dependent activity is completed."
+      ],
+
+      "PriorityAmbiguity": [
+        "The requirement does not clearly indicate how important or urgent it is.",
+        "It is not clear how this requirement should be prioritized compared with other requirements.",
+        "This can make it difficult to decide which requirement should be handled first."
+      ],
+
+      "TechnicalAmbiguity": [
+        "The requirement mentions a technical solution or operation without enough detail.",
+        "It may be unclear how the expected technical behavior should work.",
+        "Different developers may therefore implement the requirement in different ways."
+      ]
+    },
+
+    "AMBIGUITY_CLARIFICATION_QUESTIONS": {
+      "SemanticAmbiguity": [
+        "What exactly do you mean by this term or phrase?",
+        "Could you provide a specific example of what you expect?",
+        "Can you replace this general term with a specific value, condition, or time?",
+        "What specific result would you consider acceptable?",
+        "How would you describe this requirement so that everyone understands it in the same way?"
+      ],
+
+      "ScopeAmbiguity": [
+        "What exactly should this feature include?",
+        "Who should this requirement apply to?",
+        "Are there any users, activities, or situations that should be excluded?",
+        "Are there any limits or conditions on when this feature should be used?",
+        "What should the system do outside the scope of this requirement?"
+      ],
+
+      "ActorAmbiguity": [
+        "Who should perform this action?",
+        "Which user role or staff member is responsible for this activity?",
+        "Who should be allowed to use this feature?",
+        "Can more than one role perform this action?",
+        "Who should be responsible when this action requires approval?"
+      ],
+
+      "AcceptanceAmbiguity": [
+        "How will you know that this requirement has been successfully completed?",
+        "What specific result should the system produce?",
+        "What conditions must be satisfied for this requirement to be considered successful?",
+        "Are there specific numbers, limits, time periods, or quality standards that must be met?",
+        "Can you give an example of a successful result?"
+      ],
+
+      "DependencyAmbiguity": [
+        "Does this requirement depend on another person, process, or system?",
+        "What needs to happen before this action can take place?",
+        "What should happen after this action is completed?",
+        "Which external system, service, or person is involved?",
+        "What should happen if the required person, process, or system is unavailable?"
+      ],
+
+      "PriorityAmbiguity": [
+        "How important is this requirement compared with the other requirements?",
+        "Should this requirement be completed before the others?",
+        "Is there a specific deadline for this requirement?",
+        "What would happen to the business if this requirement were delayed?",
+        "Which part should be implemented first if everything cannot be completed at once?"
+      ],
+
+      "TechnicalAmbiguity": [
+        "What specific technical behavior do you expect from the system?",
+        "Is there a particular technology, method, or standard that must be used?",
+        "Are there any technical limits that the system must follow?",
+        "What should happen if the technical operation cannot be completed?",
+        "Can you provide an example of how this feature should work?"
+      ]
     }
   }
 }
