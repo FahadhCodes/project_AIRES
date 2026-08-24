@@ -1,0 +1,770 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AIRE — Chatbot Response</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+      /* ── Design tokens ─────────────────────────────────────────────────────── */
+      :root {
+        --ink: #161a1d;
+        --aire-bg: #0d1b2a;
+        --aire-surface: #132233;
+        --aire-card: #1a2e42;
+        --aire-card-hover: #1f3650;
+        --aire-teal: #0d9488;
+        --aire-teal-lt: #14b8a6;
+        --aire-teal-dim: rgba(13, 148, 136, 0.15);
+        --aire-orange: #f97316;
+        --aire-orange-dim: rgba(249, 115, 22, 0.12);
+        --aire-purple: #7c3aed;
+        --aire-purple-dim: rgba(124, 58, 237, 0.12);
+        --aire-text: #e2f0f9;
+        --aire-text-muted: #7a99b0;
+        --aire-border: rgba(255, 255, 255, 0.07);
+        --aire-radius: 12px;
+        --aire-radius-sm: 8px;
+        --aire-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+      }
+
+      /* ── Base reset (minimal) ──────────────────────────────────────────────── */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: var(--aire-bg);
+        color: var(--aire-text);
+        font-family:
+          "Segoe UI",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        font-size: 14px;
+        line-height: 1.6;
+        min-height: 100vh;
+      }
+
+      /* ── Message bubble (the actual container) ────────────────────────────── */
+      .msg-bubble {
+        max-width: 88%;
+        border-radius: var(--aire-radius);
+        padding: 12px 16px;
+        position: relative;
+        line-height: 1.65;
+      }
+
+      .msg-bubble.bubble-aire {
+        background: var(--aire-card);
+        border: 1px solid var(--aire-border);
+        border-top-left-radius: 4px;
+      }
+
+      /* ── Badge row ──────────────────────────────────────────────────────────── */
+      .badge-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+      }
+
+      .aire-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+      }
+
+      .badge-domain {
+        background: rgba(3, 105, 161, 0.2);
+        border: 1px solid rgba(3, 105, 161, 0.4);
+        color: #38bdf8;
+      }
+
+      .badge-ambiguity-count {
+        background: var(--aire-orange-dim);
+        border: 1px solid rgba(249, 115, 22, 0.3);
+        color: var(--aire-orange);
+      }
+
+      .badge-type {
+        background: var(--aire-purple-dim);
+        border: 1px solid rgba(124, 58, 237, 0.3);
+        color: #a78bfa;
+      }
+
+      /* ── Ambiguity alert banner ────────────────────────────────────────────── */
+      .ambiguity-alert {
+        background: rgba(249, 115, 22, 0.08);
+        border: 1px solid rgba(249, 115, 22, 0.2);
+        border-left: 3px solid var(--aire-orange);
+        border-radius: var(--aire-radius-sm);
+        padding: 10px 14px;
+        margin-bottom: 12px;
+        font-size: 13px;
+        color: #fed7aa;
+        line-height: 1.55;
+      }
+
+      /* ── Requirement sentence block ────────────────────────────────────────── */
+      .req-block {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--aire-border);
+        border-radius: var(--aire-radius-sm);
+        padding: 10px 14px;
+        margin-bottom: 16px;
+      }
+
+      .req-block-sentence {
+        font-size: 13px;
+        color: #cbd5e1;
+        font-style: italic;
+        border-left: 2px solid var(--aire-teal);
+        padding-left: 10px;
+        margin-bottom: 8px;
+        line-height: 1.55;
+      }
+
+      .req-block-meta {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .req-type-pill {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 20px;
+        letter-spacing: 0.4px;
+      }
+
+      .pill-functional {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+
+      .pill-performance {
+        background: rgba(59, 130, 246, 0.12);
+        color: #93c5fd;
+        border: 1px solid rgba(59, 130, 246, 0.25);
+      }
+
+      .confidence-chip {
+        font-size: 10px;
+        color: var(--aire-text-muted);
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--aire-border);
+        padding: 2px 7px;
+        border-radius: 20px;
+      }
+
+      /* ── Progress bar ──────────────────────────────────────────────────────── */
+      .clarification-progress-label {
+        font-size: 10px;
+        color: var(--aire-text-muted);
+        margin-bottom: 6px;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .clarification-progress {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        height: 4px;
+        margin-bottom: 12px;
+        overflow: hidden;
+      }
+
+      .clarification-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--aire-teal), var(--aire-teal-lt));
+        border-radius: 20px;
+        width: 0%;
+        transition: width 0.5s ease;
+      }
+
+      /* ── Ambiguity section headings ────────────────────────────────────────── */
+      .ambiguity-section {
+        margin-top: 4px;
+      }
+
+      .ambiguity-section-title {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--aire-text-muted);
+        margin-bottom: 10px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--aire-border);
+      }
+
+      /* ── Ambiguity cards ───────────────────────────────────────────────────── */
+      .ambiguity-card {
+        background: var(--aire-card);
+        border: 1px solid var(--aire-border);
+        border-radius: var(--aire-radius);
+        margin-bottom: 14px;
+        overflow: hidden;
+        transition: border-color 0.2s;
+      }
+
+      .ambiguity-card:hover {
+        border-color: rgba(13, 148, 136, 0.3);
+      }
+
+      .ambiguity-card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--aire-border);
+      }
+
+      .ambiguity-type-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        flex-shrink: 0;
+      }
+
+      .icon-semantic {
+        background: rgba(124, 58, 237, 0.2);
+      }
+
+      .icon-scope {
+        background: rgba(249, 115, 22, 0.2);
+      }
+
+      .ambiguity-type-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--aire-text);
+      }
+
+      .ambiguity-type-desc {
+        font-size: 11px;
+        color: var(--aire-text-muted);
+        margin-top: 1px;
+      }
+
+      .ambiguity-card-body {
+        padding: 12px 14px;
+      }
+
+      /* ── Questions ─────────────────────────────────────────────────────────── */
+      .question-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .question-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .question-number {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--aire-teal-dim);
+        border: 1px solid rgba(13, 148, 136, 0.3);
+        color: var(--aire-teal-lt);
+        font-size: 10px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .question-content {
+        flex: 1;
+      }
+
+      .question-text {
+        font-size: 13px;
+        color: var(--aire-text);
+        margin-bottom: 6px;
+        line-height: 1.5;
+      }
+
+      /* ── Answer textarea ───────────────────────────────────────────────────── */
+      .answer-field-wrap {
+        position: relative;
+      }
+
+      .answer-field {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--aire-border);
+        border-radius: var(--aire-radius-sm);
+        color: var(--aire-text);
+        font-size: 12px;
+        padding: 8px 40px 8px 10px;
+        resize: none;
+        outline: none;
+        transition:
+          border-color 0.2s,
+          background 0.2s;
+        font-family: inherit;
+        line-height: 1.5;
+        min-height: 38px;
+      }
+
+      .answer-field::placeholder {
+        color: var(--aire-text-muted);
+        font-size: 11px;
+      }
+
+      .answer-field:focus {
+        border-color: var(--aire-teal);
+        background: rgba(13, 148, 136, 0.06);
+      }
+
+      .answer-send-btn {
+        position: absolute;
+        right: 6px;
+        bottom: 6px;
+        width: 26px;
+        height: 26px;
+        border-radius: 6px;
+        background: var(--aire-teal);
+        border: none;
+        color: #fff;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.2s;
+        flex-shrink: 0;
+      }
+
+      .answer-send-btn:hover {
+        background: var(--aire-teal-lt);
+      }
+
+      /* ── Submit buttons ────────────────────────────────────────────────────── */
+      .submit-all-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 16px;
+        gap: 8px;
+      }
+
+      .btn-aire-primary {
+        background: var(--aire-teal);
+        border: none;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 8px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          transform 0.1s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .btn-aire-primary:hover {
+        background: var(--aire-teal-lt);
+        transform: translateY(-1px);
+      }
+
+      .btn-aire-ghost {
+        background: transparent;
+        border: 1px solid var(--aire-border);
+        color: var(--aire-text-muted);
+        font-size: 12px;
+        padding: 8px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          color 0.2s;
+      }
+
+      .btn-aire-ghost:hover {
+        border-color: var(--aire-teal);
+        color: var(--aire-teal-lt);
+      }
+
+      /* ── Typing animation (used by the .typing-dot elements, if present) ──── */
+      @keyframes typing-bounce {
+        0%,
+        80%,
+        100% {
+          transform: translateY(0);
+          opacity: 0.4;
+        }
+        40% {
+          transform: translateY(-4px);
+          opacity: 1;
+        }
+      }
+
+      /* ── Scrollbar (kept because it affects the bubble container) ────────── */
+      ::-webkit-scrollbar {
+        width: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+      }
+
+      /* added */
+      .msg {
+        display: flex;
+        flex-direction: column;
+        max-width: 86%;
+      }
+
+      .msg--bot {
+        align-self: flex-start;
+      }
+
+      .msg--user {
+        align-self: flex-end;
+        align-items: flex-end;
+      }
+
+      .msg-label {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #9a9384;
+        margin-bottom: 5px;
+        padding: 0 2px;
+      }
+
+      .bubble {
+        padding: 11px 14px;
+        border-radius: 3px;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .msg--bot .bubble {
+        background: var(--aire-card);
+        border: 1px solid var(--line);
+        color: var(--paper);
+      }
+
+      .msg--user .bubble {
+        background: var(--ink);
+        color: var(--paper);
+      }
+
+      .msg--clarify .bubble {
+        background: var(--accent-soft);
+        border: 1px solid var(--accent);
+        color: #1f3d34;
+      }
+      .msg--Greet .bubble {
+        background: var(--greeting);
+        border: 1px solid yellow;
+        color: brown;
+      }
+
+      .msg--queued .bubble {
+        background: var(--warn-soft);
+        border: 1px solid var(--warn);
+        color: #6b4321;
+      }
+
+      .meta-tag {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: #8a8374;
+        margin-top: 5px;
+        padding: 0 2px;
+      }
+
+      /* added */
+    </style>
+  </head>
+  <body>
+    <main class="thread" id="thread">
+      <div class="msg msg--bot clarify">
+        <div class="msg-label">AIRE</div>
+        <div class="bubble msg-row" id="aireResponse" style="display: none">
+          <!-- Badge row -->
+          <div class="badge-row">
+            <span class="aire-badge badge-domain">🏬 E-commerce</span>
+            <span class="aire-badge badge-ambiguity-count">⚠ 3 Ambiguities Detected</span>
+          </div>
+
+          <!-- Ambiguity alert -->
+          <div class="ambiguity-alert">
+            Your requirement has unclear boundaries, so it is not clear exactly what is included. It also contains unclear or subjective terms that
+            may be understood differently. Please help us clarify a few points below.
+          </div>
+
+          <!-- Progress indicator -->
+          <div class="clarification-progress-label">
+            <span>Clarification progress</span>
+            <span id="progressLabel"></span>
+          </div>
+          <div class="clarification-progress">
+            <div class="clarification-progress-fill" id="progressFill"></div>
+          </div>
+
+          <!-- ── Ambiguity cards ─────────────────────────────────────────── -->
+          <div class="ambiguity-section">
+            <div class="ambiguity-section-title">Clarification Required</div>
+
+            <!-- Card 1 — Scope Ambiguity -->
+            <div class="ambiguity-card" id="card-scope">
+              <div class="ambiguity-card-header">
+                <div class="ambiguity-type-icon icon-scope">🔲</div>
+                <div>
+                  <div class="ambiguity-type-label">Scope Ambiguity</div>
+                  <div class="ambiguity-type-desc">"customers should be able to find products and place orders, while sellers need to manage..."</div>
+                </div>
+              </div>
+              <div class="ambiguity-card-body">
+                <div class="question-item">
+                  <div class="question-number">1</div>
+                  <div class="question-content">
+                    <div class="question-text">What exactly should this feature include?</div>
+                    <div class="answer-field-wrap">
+                      <textarea
+                        class="answer-field"
+                        rows="1"
+                        placeholder="e.g. Search by category, price filter, and wishlist..."
+                        oninput="
+                          autoResize(this);
+                          checkProgress();
+                        "
+                        data-card="scope_1"
+                      ></textarea>
+                      <button class="answer-send-btn" title="Save answer">✓</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="question-item">
+                  <div class="question-number">2</div>
+                  <div class="question-content">
+                    <div class="question-text">Who should this requirement apply to?</div>
+                    <div class="answer-field-wrap">
+                      <textarea
+                        class="answer-field"
+                        rows="1"
+                        placeholder="e.g. Registered buyers only, not guest users..."
+                        oninput="
+                          autoResize(this);
+                          checkProgress();
+                        "
+                        data-card="scope_2"
+                      ></textarea>
+                      <button class="answer-send-btn" title="Save answer">✓</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="question-item">
+                  <div class="question-number">3</div>
+                  <div class="question-content">
+                    <div class="question-text">Are there any users, activities, or situations that should be excluded?</div>
+                    <div class="answer-field-wrap">
+                      <textarea
+                        class="answer-field"
+                        rows="1"
+                        placeholder="e.g. Sellers cannot place orders through the same account..."
+                        oninput="
+                          autoResize(this);
+                          checkProgress();
+                        "
+                        data-card="scope_3"
+                      ></textarea>
+                      <button class="answer-send-btn" title="Save answer">✓</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2 — Semantic Ambiguity -->
+            <div class="ambiguity-card" id="card-semantic">
+              <div class="ambiguity-card-header">
+                <div class="ambiguity-type-icon icon-semantic">💬</div>
+                <div>
+                  <div class="ambiguity-type-label">Semantic Ambiguity</div>
+                  <div class="ambiguity-type-desc">"administrators should handle problems... monitor the performance of sellers."</div>
+                </div>
+              </div>
+              <div class="ambiguity-card-body">
+                <div class="question-item">
+                  <div class="question-number">1</div>
+                  <div class="question-content">
+                    <div class="question-text">What exactly do you mean by "handle problems"?</div>
+                    <div class="answer-field-wrap">
+                      <textarea
+                        class="answer-field"
+                        rows="1"
+                        placeholder="e.g. Resolve disputes, issue refunds, or escalate to legal..."
+                        oninput="
+                          autoResize(this);
+                          checkProgress();
+                        "
+                        data-card="semantic_1"
+                      ></textarea>
+                      <button class="answer-send-btn" title="Save answer">✓</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="question-item">
+                  <div class="question-number">2</div>
+                  <div class="question-content">
+                    <div class="question-text">What specific metrics define "monitor the performance of sellers"?</div>
+                    <div class="answer-field-wrap">
+                      <textarea
+                        class="answer-field"
+                        rows="1"
+                        placeholder="e.g. Order fulfilment rate, customer rating, response time..."
+                        oninput="
+                          autoResize(this);
+                          checkProgress();
+                        "
+                        data-card="semantic_2"
+                      ></textarea>
+                      <button class="answer-send-btn" title="Save answer">✓</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="question-item">
+                  <div class="question-number">3</div>
+                  <div class="question-content">
+                    <div class="question-text">Can you replace the general term with a specific value, condition, or time?</div>
+                    <div class="answer-field-wrap">
+                      <textarea
+                        class="answer-field"
+                        rows="1"
+                        placeholder="e.g. Sellers with ratings below 3.0 should be flagged weekly..."
+                        oninput="
+                          autoResize(this);
+                          checkProgress();
+                        "
+                        data-card="semantic_3"
+                      ></textarea>
+                      <button class="answer-send-btn" title="Save answer">✓</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /ambiguity-section -->
+
+          <!-- Submit row -->
+          <div class="submit-all-row">
+            <button class="btn-aire-ghost" onclick="skipAll()">Skip for now</button>
+            <button class="btn-aire-primary" onclick="submitAll()">✓ Submit Clarifications</button>
+          </div>
+        </div>
+      </div>
+      <!-- Confirmation message (hidden until submit) -->
+      <div class="msg msg--bot queued" id="confirmRow" style="display: none">
+        <div class="msg-label">AIRE</div>
+        <div class="bubble">
+          ✅ Thank you — your clarifications have been recorded. A Business Analyst will review your requirement and we will follow up shortly. Your
+          token number is <strong>#TK-2024-0042</strong>.
+        </div>
+      </div>
+    </main>
+    <!------------------------------------------------------------------------------------------------>
+
+    <!------------------------------------------------------------------------------------------------>
+  </body>
+  <script>
+    const thread = document.getElementById("thread");
+    // ── Show response after typing animation ──────────────────────────────────
+    setTimeout(() => {
+      // document.getElementById("typingRow").style.display = "none";
+      document.getElementById("aireResponse").style.display = "block";
+      document.getElementById("thread").scrollTop = thread.scrollHeight;
+    }, 2000);
+    // ── Auto resize textarea ──────────────────────────────────────────────────
+    function autoResize(el) {
+      el.style.height = "auto";
+      el.style.height = Math.min(el.scrollHeight, 120) + "px";
+    }
+
+    // ── Progress tracking ─────────────────────────────────────────────────────
+    function checkProgress() {
+      const cards = ["scope_1", "scope_2", "scope_3", "semantic_1", "semantic_2", "semantic_3"];
+      let answered = 0;
+
+      cards.forEach((card) => {
+        const fields = document.querySelectorAll(`[data-card="${card}"]`);
+        const hasAny = Array.from(fields).some((f) => f.value.trim().length > 0);
+        if (hasAny) answered++;
+      });
+
+      const pct = Math.round((answered / cards.length) * 100);
+      document.getElementById("progressFill").style.width = pct + "%";
+      document.getElementById("progressLabel").textContent = `${answered} / ${cards.length} Questions answered`;
+    }
+
+    // ── Submit all clarifications ─────────────────────────────────────────────
+    function submitAll() {
+      document.getElementById("aireResponse").style.display = "block";
+      document.getElementById("confirmRow").style.display = "block";
+      document.getElementById("thread").scrollTop = thread.scrollHeight;
+      const textAreas = document.querySelectorAll(".answer-field");
+      textAreas.forEach((input) => {
+        input.disabled = true;
+      });
+    }
+
+    // ── Skip ──────────────────────────────────────────────────────────────────
+    function skipAll() {
+      const skipMsg = document.createElement("div");
+      skipMsg.className = "msg msg--user";
+      skipMsg.innerHTML = `
+      <div class="msg-label">You</div>
+      <div class="bubble">I'll clarify these later.</div>`;
+
+      document.getElementById("thread").appendChild(skipMsg);
+      document.getElementById("aireResponse").style.display = "none";
+
+      const tokenMsg = document.createElement("div");
+      tokenMsg.className = "msg msg--bot queued";
+      tokenMsg.innerHTML = `
+      <div class="msg-label">AIRE</div>
+      <div class="bubble">Understood. Your requirement has been saved with token <strong>#TK-2024-0042</strong>.
+          Our team will reach out to clarify the open points.</div>`;
+      document.getElementById("thread").appendChild(tokenMsg);
+      document.getElementById("thread").scrollTop = thread.scrollHeight;
+    }
+  </script>
+</html>

@@ -141,6 +141,7 @@ def decode_domain(df, domain_dict):
     df.Domain = df.Domain.replace(reverse_domain_mapping)
     return df
 
+
 def convert_numpy_types(data):
     if isinstance(data, dict):
         return {key: convert_numpy_types(val) for key, val in data.items()}
@@ -237,6 +238,7 @@ def response_constructor(results_df):  # Convert the prediction into a python Di
 
 #  High-Lavel Functions-----------------------------------------------------------
 
+
 def bot_response(final_dict):  # Collecting all of the ambiguities type in the paragraph ---> return: a Final response
     detected_requirement_types = final_dict['requirements'].keys()
     detected_ambiguities = set()
@@ -262,9 +264,11 @@ def bot_response(final_dict):  # Collecting all of the ambiguities type in the p
         string += sent+" "
 
     keyQuestions = ""
+    grouped_by_ambiguity = dict()
     for ambiguity in senteces_ambiguity.keys():
         # print(final_dict['text'][senteces_ambiguity[x]]['sentence'])
         probs = " ".join([final_dict['text'][ID]['sentence'] for ID in senteces_ambiguity[ambiguity]])
+        grouped_by_ambiguity[ambiguity] = probs
         qna = ""
         for i, question in enumerate(Vocab["respons"]["AMBIGUITY_CLARIFICATION_QUESTIONS"][ambiguity]):
             qna += f"\n({i+1}) {question}"
@@ -284,7 +288,14 @@ def bot_response(final_dict):  # Collecting all of the ambiguities type in the p
     {keyQuestions}
 
     '''
-    return final_response
+
+    final_res_dict = dict({
+        'DOMAIN': final_dict['domain'],
+        'DETECTED_AMBIGUITES': [x for x in list(detected_ambiguities)],
+        'DESCRIPTION': string,
+        'GROUPED_BY_AMBIGUITY': grouped_by_ambiguity
+    })
+    return final_response, final_res_dict
 #  High-Lavel Functions-----------------------------------------------------------
 
 

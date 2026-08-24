@@ -20,7 +20,6 @@ def map_label_to_response(label, direct_res):
     if label == 'greeting':
         return direct_res
     elif label in keys:
-        return f'''{direct_res}
-                   \n{Vocab["respons"]["question"].get(str(label), direct_res)}'''
+        return direct_res
     else:
-        return Vocab["respons"]["question"].get(str(label), direct_res)
+        return direct_res

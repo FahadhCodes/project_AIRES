@@ -20,12 +20,10 @@ expects {"confidence": float, "label": str, "message": str} back.
 from flask import render_template, request, jsonify
 import uuid
 from AIRE import app
-from AIRE.models import requirements, ba_outputs
+from AIRE.vocab import Vocab
 from AIRE.ml_engine import classify_requirement
 from AIRE.label_mapper import map_label_to_response
-
-# Confidence threshold for ambiguity trigger (see project context)
-CONFIDENCE_THRESHOLD = 0.85
+import json
 
 # In-memory store for submitted requirements (token -> data)
 # Swap for a real DB later; kept simple on purpose.
@@ -56,12 +54,11 @@ def chat():
 
     # --- ML ENGINE ---
     ml_result = classify_requirement(requirement_text)
-    confidence = ml_result["confidence"]
+    ambiguous = ml_result["ambiguous"]
     label = ml_result["label"]
-    greet_res = ml_result["response"]
-
+    dict_res = ml_result["response"]
     # --- LABEL MAPPING ---
-    mapped_sentence = map_label_to_response(label, greet_res)
+    mapped_sentence = map_label_to_response(label, dict_res)
 
     token = "Not set"
 
@@ -69,10 +66,12 @@ def chat():
     if label == 'greeting':
         reply_text = mapped_sentence
         status = "Greet"
-    elif confidence > 0:
+    elif ambiguous > 0:
         # Confident enough to ask a clarifying question back to the client
-        reply_text = mapped_sentence
+        reply_text = dict_res
         status = "clarify"
+        print(reply_text)
+        token = str(uuid.uuid4())[:8].upper()
     else:
         token = str(uuid.uuid4())[:8].upper()
         # Storing into DB
@@ -80,18 +79,20 @@ def chat():
             # inside here we have to store the result_df in the Final_Production.ipynb with Q&A
             "text": requirement_text,
             "label": label,
-            "confidence": confidence,
+            "ambiguous": ambiguous,
         }
         # Not confident - log it and tell the client we'll follow up
-        reply_text = f"Thanks! We've logged your requirement (Token: {token}). Our team will contact you shortly."
+        reply_text = f"Understood. Your requirement has been saved with token <strong>{token}</strong>.Our team will reach out to clarify the open points."
         status = "queued"
 
     response_payload = {
         "status": status,
         "token": token,
         "label": label,
-        "confidence": round(confidence, 2),
-        "reply": reply_text
+        "ambiguous": ambiguous,
+        "reply": reply_text,
+        "vocab": Vocab
     }
-
-    return jsonify(response_payload)
+    with open('TEST.json', 'w') as f:
+        f.write(json.dumps(response_payload))
+    return json.dumps(response_payload)

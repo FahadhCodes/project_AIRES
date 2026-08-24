@@ -1,0 +1,41 @@
+{
+  "domain": "Finance",
+  "total_ambiguity": 3,
+  "text": [
+    {
+      "id": 0,
+      "sentence": "hello, we need a system for our company that handles customer applications across several branches.",
+      "requirement_type": "Security",
+      "requiremnt_type_confidance": 0.5039
+    },
+    {
+      "id": 1,
+      "sentence": "staff should be able to review applications and approve them when everything is correct.",
+      "requirement_type": "Usability",
+      "requiremnt_type_confidance": 0.6191
+    },
+    {
+      "id": 2,
+      "sentence": "customers should be informed about the progress of their applications.",
+      "requirement_type": "Usability",
+      "requiremnt_type_confidance": 0.4133
+    },
+    {
+      "id": 3,
+      "sentence": "managers should be able to see which applications are still pending and take action when there are delays.",
+      "requirement_type": "Security",
+      "requiremnt_type_confidance": 0.5189
+    },
+    {
+      "id": 4,
+      "sentence": "the system should make the process secure and comply with the relevant rules.",
+      "requirement_type": "Operational",
+      "requiremnt_type_confidance": 0.4143
+    }
+  ],
+  "requirements": {
+    "Security": { "NumbersOfSentances": 1, "overallAmbiguity": [3], "SemanticAmbiguity": [], "ScopeAmbiguity": [], "ActorAmbiguity": [] },
+    "Usability": { "NumbersOfSentances": 1, "overallAmbiguity": [1], "SemanticAmbiguity": [], "ScopeAmbiguity": [], "ActorAmbiguity": [1] },
+    "Operational": { "NumbersOfSentances": 1, "overallAmbiguity": [4], "SemanticAmbiguity": [4], "ScopeAmbiguity": [4], "ActorAmbiguity": [] }
+  }
+}

@@ -1,0 +1,1027 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AIRE — Chatbot Response</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+      /* ── Design tokens ─────────────────────────────────────────────────────── */
+      :root {
+        --aire-bg: #0d1b2a;
+        --aire-surface: #132233;
+        --aire-card: #1a2e42;
+        --aire-card-hover: #1f3650;
+        --aire-teal: #0d9488;
+        --aire-teal-lt: #14b8a6;
+        --aire-teal-dim: rgba(13, 148, 136, 0.15);
+        --aire-orange: #f97316;
+        --aire-orange-dim: rgba(249, 115, 22, 0.12);
+        --aire-purple: #7c3aed;
+        --aire-purple-dim: rgba(124, 58, 237, 0.12);
+        --aire-text: #e2f0f9;
+        --aire-text-muted: #7a99b0;
+        --aire-border: rgba(255, 255, 255, 0.07);
+        --aire-radius: 12px;
+        --aire-radius-sm: 8px;
+        --aire-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+      }
+
+      /* ── Base ──────────────────────────────────────────────────────────────── */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: var(--aire-bg);
+        color: var(--aire-text);
+        font-family:
+          "Segoe UI",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        font-size: 14px;
+        line-height: 1.6;
+        min-height: 100vh;
+      }
+
+      /* ── Chat wrapper ──────────────────────────────────────────────────────── */
+      .chat-viewport {
+        max-width: 780px;
+        margin: 0 auto;
+        padding: 24px 16px 120px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      /* ── Chat header ───────────────────────────────────────────────────────── */
+      .chat-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 20px;
+        background: var(--aire-surface);
+        border-bottom: 1px solid var(--aire-border);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .chat-header-logo {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--aire-teal), #0369a1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 800;
+        color: #fff;
+        letter-spacing: -0.5px;
+        flex-shrink: 0;
+      }
+
+      .chat-header-info h6 {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--aire-text);
+        margin: 0;
+      }
+
+      .chat-header-info span {
+        font-size: 11px;
+        color: var(--aire-teal-lt);
+      }
+
+      /* ── Message bubbles ───────────────────────────────────────────────────── */
+      .msg-row {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+      }
+
+      .msg-row.msg-client {
+        flex-direction: row-reverse;
+      }
+
+      .msg-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .msg-avatar.avatar-aire {
+        background: linear-gradient(135deg, var(--aire-teal), #0369a1);
+        color: #fff;
+      }
+
+      .msg-avatar.avatar-client {
+        background: #334155;
+        color: var(--aire-text-muted);
+      }
+
+      .msg-bubble {
+        max-width: 88%;
+        border-radius: var(--aire-radius);
+        padding: 12px 16px;
+        position: relative;
+        line-height: 1.65;
+      }
+
+      .msg-bubble.bubble-aire {
+        background: var(--aire-card);
+        border: 1px solid var(--aire-border);
+        border-top-left-radius: 4px;
+      }
+
+      .msg-bubble.bubble-client {
+        background: var(--aire-teal-dim);
+        border: 1px solid rgba(13, 148, 136, 0.25);
+        border-top-right-radius: 4px;
+        color: var(--aire-text);
+      }
+
+      .msg-time {
+        font-size: 10px;
+        color: var(--aire-text-muted);
+        margin-top: 4px;
+        display: block;
+      }
+
+      .msg-row.msg-client .msg-time {
+        text-align: right;
+      }
+
+      /* ── Domain + token badge row ──────────────────────────────────────────── */
+      .badge-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+      }
+
+      .aire-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+      }
+
+      .badge-domain {
+        background: rgba(3, 105, 161, 0.2);
+        border: 1px solid rgba(3, 105, 161, 0.4);
+        color: #38bdf8;
+      }
+
+      .badge-ambiguity-count {
+        background: var(--aire-orange-dim);
+        border: 1px solid rgba(249, 115, 22, 0.3);
+        color: var(--aire-orange);
+      }
+
+      .badge-type {
+        background: var(--aire-purple-dim);
+        border: 1px solid rgba(124, 58, 237, 0.3);
+        color: #a78bfa;
+      }
+
+      /* ── Ambiguity alert banner ────────────────────────────────────────────── */
+      .ambiguity-alert {
+        background: rgba(249, 115, 22, 0.08);
+        border: 1px solid rgba(249, 115, 22, 0.2);
+        border-left: 3px solid var(--aire-orange);
+        border-radius: var(--aire-radius-sm);
+        padding: 10px 14px;
+        margin-bottom: 12px;
+        font-size: 13px;
+        color: #fed7aa;
+        line-height: 1.55;
+      }
+
+      /* ── Requirement sentence card ─────────────────────────────────────────── */
+      .req-block {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--aire-border);
+        border-radius: var(--aire-radius-sm);
+        padding: 10px 14px;
+        margin-bottom: 16px;
+      }
+
+      .req-block-sentence {
+        font-size: 13px;
+        color: #cbd5e1;
+        font-style: italic;
+        border-left: 2px solid var(--aire-teal);
+        padding-left: 10px;
+        margin-bottom: 8px;
+        line-height: 1.55;
+      }
+
+      .req-block-meta {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .req-type-pill {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 20px;
+        letter-spacing: 0.4px;
+      }
+
+      .pill-functional {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+      .pill-security {
+        background: rgba(239, 68, 68, 0.12);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.25);
+      }
+      .pill-performance {
+        background: rgba(59, 130, 246, 0.12);
+        color: #93c5fd;
+        border: 1px solid rgba(59, 130, 246, 0.25);
+      }
+      .pill-usability {
+        background: rgba(168, 85, 247, 0.12);
+        color: #c4b5fd;
+        border: 1px solid rgba(168, 85, 247, 0.25);
+      }
+      .pill-operational {
+        background: rgba(245, 158, 11, 0.12);
+        color: #fcd34d;
+        border: 1px solid rgba(245, 158, 11, 0.25);
+      }
+      .pill-nonfunctional {
+        background: rgba(100, 116, 139, 0.15);
+        color: #94a3b8;
+        border: 1px solid rgba(100, 116, 139, 0.3);
+      }
+
+      .confidence-chip {
+        font-size: 10px;
+        color: var(--aire-text-muted);
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--aire-border);
+        padding: 2px 7px;
+        border-radius: 20px;
+      }
+
+      /* ── Ambiguity section ─────────────────────────────────────────────────── */
+      .ambiguity-section {
+        margin-top: 4px;
+      }
+
+      .ambiguity-section-title {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--aire-text-muted);
+        margin-bottom: 10px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--aire-border);
+      }
+
+      /* ── Ambiguity question card ───────────────────────────────────────────── */
+      .ambiguity-card {
+        background: var(--aire-card);
+        border: 1px solid var(--aire-border);
+        border-radius: var(--aire-radius);
+        margin-bottom: 14px;
+        overflow: hidden;
+        transition: border-color 0.2s;
+      }
+
+      .ambiguity-card:hover {
+        border-color: rgba(13, 148, 136, 0.3);
+      }
+
+      .ambiguity-card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--aire-border);
+      }
+
+      .ambiguity-type-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        flex-shrink: 0;
+      }
+
+      .icon-semantic {
+        background: rgba(124, 58, 237, 0.2);
+      }
+      .icon-scope {
+        background: rgba(249, 115, 22, 0.2);
+      }
+      .icon-actor {
+        background: rgba(59, 130, 246, 0.2);
+      }
+      .icon-acceptance {
+        background: rgba(16, 185, 129, 0.2);
+      }
+      .icon-dependency {
+        background: rgba(245, 158, 11, 0.2);
+      }
+      .icon-priority {
+        background: rgba(239, 68, 68, 0.2);
+      }
+      .icon-technical {
+        background: rgba(100, 116, 139, 0.2);
+      }
+
+      .ambiguity-type-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--aire-text);
+      }
+
+      .ambiguity-type-desc {
+        font-size: 11px;
+        color: var(--aire-text-muted);
+        margin-top: 1px;
+      }
+
+      .ambiguity-card-body {
+        padding: 12px 14px;
+      }
+
+      /* ── Questions list ────────────────────────────────────────────────────── */
+      .question-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .question-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .question-number {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--aire-teal-dim);
+        border: 1px solid rgba(13, 148, 136, 0.3);
+        color: var(--aire-teal-lt);
+        font-size: 10px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .question-content {
+        flex: 1;
+      }
+
+      .question-text {
+        font-size: 13px;
+        color: var(--aire-text);
+        margin-bottom: 6px;
+        line-height: 1.5;
+      }
+
+      /* ── Answer textbox ────────────────────────────────────────────────────── */
+      .answer-field-wrap {
+        position: relative;
+      }
+
+      .answer-field {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--aire-border);
+        border-radius: var(--aire-radius-sm);
+        color: var(--aire-text);
+        font-size: 12px;
+        padding: 8px 40px 8px 10px;
+        resize: none;
+        outline: none;
+        transition:
+          border-color 0.2s,
+          background 0.2s;
+        font-family: inherit;
+        line-height: 1.5;
+        min-height: 38px;
+      }
+
+      .answer-field::placeholder {
+        color: var(--aire-text-muted);
+        font-size: 11px;
+      }
+
+      .answer-field:focus {
+        border-color: var(--aire-teal);
+        background: rgba(13, 148, 136, 0.06);
+      }
+
+      .answer-send-btn {
+        position: absolute;
+        right: 6px;
+        bottom: 6px;
+        width: 26px;
+        height: 26px;
+        border-radius: 6px;
+        background: var(--aire-teal);
+        border: none;
+        color: #fff;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.2s;
+        flex-shrink: 0;
+      }
+
+      .answer-send-btn:hover {
+        background: var(--aire-teal-lt);
+      }
+
+      /* ── Submit all button ─────────────────────────────────────────────────── */
+      .submit-all-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 16px;
+        gap: 8px;
+      }
+
+      .btn-aire-primary {
+        background: var(--aire-teal);
+        border: none;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 8px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          transform 0.1s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .btn-aire-primary:hover {
+        background: var(--aire-teal-lt);
+        transform: translateY(-1px);
+      }
+
+      .btn-aire-ghost {
+        background: transparent;
+        border: 1px solid var(--aire-border);
+        color: var(--aire-text-muted);
+        font-size: 12px;
+        padding: 8px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          color 0.2s;
+      }
+
+      .btn-aire-ghost:hover {
+        border-color: var(--aire-teal);
+        color: var(--aire-teal-lt);
+      }
+
+      /* ── Input bar at bottom ───────────────────────────────────────────────── */
+      .chat-input-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--aire-surface);
+        border-top: 1px solid var(--aire-border);
+        padding: 12px 16px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        max-width: 780px;
+        margin: 0 auto;
+      }
+
+      .chat-input-field {
+        flex: 1;
+        background: var(--aire-card);
+        border: 1px solid var(--aire-border);
+        border-radius: 24px;
+        color: var(--aire-text);
+        font-size: 13px;
+        padding: 10px 16px;
+        outline: none;
+        font-family: inherit;
+        transition: border-color 0.2s;
+      }
+
+      .chat-input-field::placeholder {
+        color: var(--aire-text-muted);
+      }
+
+      .chat-input-field:focus {
+        border-color: var(--aire-teal);
+      }
+
+      .chat-input-send {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--aire-teal);
+        border: none;
+        color: #fff;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: background 0.2s;
+      }
+
+      .chat-input-send:hover {
+        background: var(--aire-teal-lt);
+      }
+
+      /* ── Typing indicator ──────────────────────────────────────────────────── */
+      .typing-indicator {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+        padding: 10px 14px;
+      }
+
+      .typing-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--aire-teal);
+        animation: typing-bounce 1.2s infinite;
+      }
+
+      .typing-dot:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .typing-dot:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+
+      @keyframes typing-bounce {
+        0%,
+        80%,
+        100% {
+          transform: translateY(0);
+          opacity: 0.4;
+        }
+        40% {
+          transform: translateY(-4px);
+          opacity: 1;
+        }
+      }
+
+      /* ── Progress bar ──────────────────────────────────────────────────────── */
+      .clarification-progress {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        height: 4px;
+        margin-bottom: 12px;
+        overflow: hidden;
+      }
+
+      .clarification-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--aire-teal), var(--aire-teal-lt));
+        border-radius: 20px;
+        width: 0%;
+        transition: width 0.5s ease;
+      }
+
+      .clarification-progress-label {
+        font-size: 10px;
+        color: var(--aire-text-muted);
+        margin-bottom: 6px;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      /* ── Scrollbar ─────────────────────────────────────────────────────────── */
+      ::-webkit-scrollbar {
+        width: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ── Chat Header ─────────────────────────────────────────────────────────── -->
+    <div class="chat-header">
+      <div class="chat-header-logo">AI</div>
+      <div class="chat-header-info">
+        <h6>AIRE Assistant</h6>
+        <span>● Online — Requirement Analysis Active</span>
+      </div>
+    </div>
+
+    <!-- ── Chat Viewport ───────────────────────────────────────────────────────── -->
+    <div class="chat-viewport" id="chatViewport">
+      <!-- Client message -->
+      <div class="msg-row msg-client">
+        <div class="msg-avatar avatar-client">CL</div>
+        <div>
+          <div class="msg-bubble bubble-client">
+            we operate an online marketplace with many sellers. customers should be able to find products and place orders, while sellers need to
+            manage the products they offer and update their orders. administrators should handle problems reported by customers and monitor the
+            performance of sellers. the company also wants reports to understand sales activity.
+          </div>
+          <span class="msg-time">10:42 AM</span>
+        </div>
+      </div>
+
+      <!-- Typing indicator -->
+      <div class="msg-row" id="typingRow">
+        <div class="msg-avatar avatar-aire">AI</div>
+        <div class="msg-bubble bubble-aire">
+          <div class="typing-indicator">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AIRE Response bubble -->
+      <div class="msg-row" id="aireResponse" style="display: none">
+        <div class="msg-avatar avatar-aire">AI</div>
+        <div style="max-width: 92%; flex: 1">
+          <div class="msg-bubble bubble-aire">
+            <!-- Badge row -->
+            <div class="badge-row">
+              <span class="aire-badge badge-domain">🏬 E-commerce</span>
+              <span class="aire-badge badge-ambiguity-count">⚠ 3 Ambiguities Detected</span>
+              <span class="aire-badge badge-type">📋 Functional + Performance</span>
+            </div>
+
+            <!-- Ambiguity alert -->
+            <div class="ambiguity-alert">
+              Your requirement has unclear boundaries, so it is not clear exactly what is included. It also contains unclear or subjective terms that
+              may be understood differently. Please help us clarify a few points below.
+            </div>
+
+            <!-- Sentence breakdown -->
+            <div class="req-block">
+              <div class="req-block-sentence">
+                "customers should be able to find products and place orders, while sellers need to manage the products they offer and update their
+                orders."
+              </div>
+              <div class="req-block-meta">
+                <span class="req-type-pill pill-functional">Functional</span>
+                <span class="confidence-chip">Confidence: 65.72%</span>
+                <span class="aire-badge badge-type" style="font-size: 10px; padding: 2px 7px">ScopeAmbiguity</span>
+              </div>
+            </div>
+
+            <div class="req-block">
+              <div class="req-block-sentence">
+                "administrators should handle problems reported by customers and monitor the performance of sellers."
+              </div>
+              <div class="req-block-meta">
+                <span class="req-type-pill pill-performance">Performance</span>
+                <span class="confidence-chip">Confidence: 57.15%</span>
+                <span class="aire-badge badge-type" style="font-size: 10px; padding: 2px 7px; background: var(--aire-purple-dim)"
+                  >SemanticAmbiguity</span
+                >
+              </div>
+            </div>
+
+            <!-- Progress indicator -->
+            <div class="clarification-progress-label">
+              <span>Clarification progress</span>
+              <span id="progressLabel">0 / 2 sections answered</span>
+            </div>
+            <div class="clarification-progress">
+              <div class="clarification-progress-fill" id="progressFill"></div>
+            </div>
+
+            <!-- ── Ambiguity cards ─────────────────────────────────────────── -->
+            <div class="ambiguity-section">
+              <div class="ambiguity-section-title">Clarification Required</div>
+
+              <!-- Card 1 — Scope Ambiguity -->
+              <div class="ambiguity-card" id="card-scope">
+                <div class="ambiguity-card-header">
+                  <div class="ambiguity-type-icon icon-scope">🔲</div>
+                  <div>
+                    <div class="ambiguity-type-label">Scope Ambiguity</div>
+                    <div class="ambiguity-type-desc">
+                      "customers should be able to find products and place orders, while sellers need to manage..."
+                    </div>
+                  </div>
+                </div>
+                <div class="ambiguity-card-body">
+                  <div class="question-item">
+                    <div class="question-number">1</div>
+                    <div class="question-content">
+                      <div class="question-text">What exactly should this feature include?</div>
+                      <div class="answer-field-wrap">
+                        <textarea
+                          class="answer-field"
+                          rows="1"
+                          placeholder="e.g. Search by category, price filter, and wishlist..."
+                          oninput="
+                            autoResize(this);
+                            checkProgress();
+                          "
+                          data-card="scope"
+                        ></textarea>
+                        <button class="answer-send-btn" title="Save answer">✓</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="question-item">
+                    <div class="question-number">2</div>
+                    <div class="question-content">
+                      <div class="question-text">Who should this requirement apply to?</div>
+                      <div class="answer-field-wrap">
+                        <textarea
+                          class="answer-field"
+                          rows="1"
+                          placeholder="e.g. Registered buyers only, not guest users..."
+                          oninput="
+                            autoResize(this);
+                            checkProgress();
+                          "
+                          data-card="scope"
+                        ></textarea>
+                        <button class="answer-send-btn" title="Save answer">✓</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="question-item">
+                    <div class="question-number">3</div>
+                    <div class="question-content">
+                      <div class="question-text">Are there any users, activities, or situations that should be excluded?</div>
+                      <div class="answer-field-wrap">
+                        <textarea
+                          class="answer-field"
+                          rows="1"
+                          placeholder="e.g. Sellers cannot place orders through the same account..."
+                          oninput="
+                            autoResize(this);
+                            checkProgress();
+                          "
+                          data-card="scope"
+                        ></textarea>
+                        <button class="answer-send-btn" title="Save answer">✓</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card 2 — Semantic Ambiguity -->
+              <div class="ambiguity-card" id="card-semantic">
+                <div class="ambiguity-card-header">
+                  <div class="ambiguity-type-icon icon-semantic">💬</div>
+                  <div>
+                    <div class="ambiguity-type-label">Semantic Ambiguity</div>
+                    <div class="ambiguity-type-desc">"administrators should handle problems... monitor the performance of sellers."</div>
+                  </div>
+                </div>
+                <div class="ambiguity-card-body">
+                  <div class="question-item">
+                    <div class="question-number">1</div>
+                    <div class="question-content">
+                      <div class="question-text">What exactly do you mean by "handle problems"?</div>
+                      <div class="answer-field-wrap">
+                        <textarea
+                          class="answer-field"
+                          rows="1"
+                          placeholder="e.g. Resolve disputes, issue refunds, or escalate to legal..."
+                          oninput="
+                            autoResize(this);
+                            checkProgress();
+                          "
+                          data-card="semantic"
+                        ></textarea>
+                        <button class="answer-send-btn" title="Save answer">✓</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="question-item">
+                    <div class="question-number">2</div>
+                    <div class="question-content">
+                      <div class="question-text">What specific metrics define "monitor the performance of sellers"?</div>
+                      <div class="answer-field-wrap">
+                        <textarea
+                          class="answer-field"
+                          rows="1"
+                          placeholder="e.g. Order fulfilment rate, customer rating, response time..."
+                          oninput="
+                            autoResize(this);
+                            checkProgress();
+                          "
+                          data-card="semantic"
+                        ></textarea>
+                        <button class="answer-send-btn" title="Save answer">✓</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="question-item">
+                    <div class="question-number">3</div>
+                    <div class="question-content">
+                      <div class="question-text">Can you replace the general term with a specific value, condition, or time?</div>
+                      <div class="answer-field-wrap">
+                        <textarea
+                          class="answer-field"
+                          rows="1"
+                          placeholder="e.g. Sellers with ratings below 3.0 should be flagged weekly..."
+                          oninput="
+                            autoResize(this);
+                            checkProgress();
+                          "
+                          data-card="semantic"
+                        ></textarea>
+                        <button class="answer-send-btn" title="Save answer">✓</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- /ambiguity-section -->
+
+            <!-- Submit row -->
+            <div class="submit-all-row">
+              <button class="btn-aire-ghost" onclick="skipAll()">Skip for now</button>
+              <button class="btn-aire-primary" onclick="submitAll()">✓ Submit Clarifications</button>
+            </div>
+          </div>
+          <!-- /bubble-aire -->
+          <span class="msg-time">10:42 AM · AIRE Analysis Complete</span>
+        </div>
+      </div>
+
+      <!-- Confirmation message (hidden until submit) -->
+      <div class="msg-row" id="confirmRow" style="display: none">
+        <div class="msg-avatar avatar-aire">AI</div>
+        <div>
+          <div class="msg-bubble bubble-aire">
+            ✅ Thank you — your clarifications have been recorded. A Business Analyst will review your requirement and we will follow up shortly. Your
+            token number is <strong>#TK-2024-0042</strong>.
+          </div>
+          <span class="msg-time">10:43 AM</span>
+        </div>
+      </div>
+    </div>
+    <!-- /chat-viewport -->
+
+    <!-- ── Chat Input Bar ──────────────────────────────────────────────────────── -->
+    <div
+      style="
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--aire-surface);
+        border-top: 1px solid var(--aire-border);
+        padding: 12px 16px;
+      "
+    >
+      <div style="max-width: 780px; margin: 0 auto; display: flex; gap: 10px; align-items: center">
+        <input type="text" class="chat-input-field" placeholder="Type your software requirement here…" id="mainInput" />
+        <button class="chat-input-send" onclick="sendMessage()" title="Send">➤</button>
+      </div>
+    </div>
+
+    <script>
+      // ── Show response after typing animation ──────────────────────────────────
+      setTimeout(() => {
+        document.getElementById("typingRow").style.display = "none";
+        document.getElementById("aireResponse").style.display = "flex";
+        document.getElementById("chatViewport").scrollTop = 99999;
+      }, 2000);
+
+      // ── Auto resize textarea ──────────────────────────────────────────────────
+      function autoResize(el) {
+        el.style.height = "auto";
+        el.style.height = Math.min(el.scrollHeight, 120) + "px";
+      }
+
+      // ── Progress tracking ─────────────────────────────────────────────────────
+      function checkProgress() {
+        const cards = ["scope", "semantic"];
+        let answered = 0;
+
+        cards.forEach((card) => {
+          const fields = document.querySelectorAll(`[data-card="${card}"]`);
+          const hasAny = Array.from(fields).some((f) => f.value.trim().length > 0);
+          if (hasAny) answered++;
+        });
+
+        const pct = Math.round((answered / cards.length) * 100);
+        document.getElementById("progressFill").style.width = pct + "%";
+        document.getElementById("progressLabel").textContent = `${answered} / ${cards.length} sections answered`;
+      }
+
+      // ── Submit all clarifications ─────────────────────────────────────────────
+      function submitAll() {
+        document.getElementById("aireResponse").style.display = "none";
+        document.getElementById("confirmRow").style.display = "flex";
+        document.getElementById("chatViewport").scrollTop = 99999;
+      }
+
+      // ── Skip ──────────────────────────────────────────────────────────────────
+      function skipAll() {
+        const skipMsg = document.createElement("div");
+        skipMsg.className = "msg-row msg-client";
+        skipMsg.innerHTML = `
+      <div class="msg-avatar avatar-client">CL</div>
+      <div>
+        <div class="msg-bubble bubble-client">I'll clarify these later.</div>
+        <span class="msg-time">Now</span>
+      </div>`;
+        document.getElementById("chatViewport").appendChild(skipMsg);
+        document.getElementById("aireResponse").style.display = "none";
+
+        const tokenMsg = document.createElement("div");
+        tokenMsg.className = "msg-row";
+        tokenMsg.innerHTML = `
+      <div class="msg-avatar avatar-aire">AI</div>
+      <div>
+        <div class="msg-bubble bubble-aire">
+          Understood. Your requirement has been saved with token <strong>#TK-2024-0042</strong>.
+          Our team will reach out to clarify the open points.
+        </div>
+        <span class="msg-time">Now</span>
+      </div>`;
+        document.getElementById("chatViewport").appendChild(tokenMsg);
+        document.getElementById("chatViewport").scrollTop = 99999;
+      }
+
+      // ── Send new message ──────────────────────────────────────────────────────
+      function sendMessage() {
+        const input = document.getElementById("mainInput");
+        const text = input.value.trim();
+        if (!text) return;
+
+        const clientMsg = document.createElement("div");
+        clientMsg.className = "msg-row msg-client";
+        clientMsg.innerHTML = `
+      <div class="msg-avatar avatar-client">CL</div>
+      <div>
+        <div class="msg-bubble bubble-client">${text}</div>
+        <span class="msg-time">Now</span>
+      </div>`;
+        document.getElementById("chatViewport").appendChild(clientMsg);
+        input.value = "";
+        document.getElementById("chatViewport").scrollTop = 99999;
+      }
+
+      document.getElementById("mainInput").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") sendMessage();
+      });
+    </script>
+  </body>
+</html>
