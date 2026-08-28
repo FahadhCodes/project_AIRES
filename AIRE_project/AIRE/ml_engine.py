@@ -42,16 +42,16 @@ def classify_requirement(requirement_text: str) -> dict:
     elif data['max_similarity_value'] > 0.75 and len(doc) > 7:
         label = "question"
         results_df = base_requirement_table(requirement_text)
-        final_dict = response_constructor(results_df)
-        final_res, final_res_dict = bot_response(final_dict)
+        final_dict, detailedPred = response_constructor(results_df)
+        final_res, final_res_dict = bot_response(final_dict, detailedPred)
         ambiguous = final_dict['total_ambiguity']
         res = final_res_dict
         condition_id = 'B'
     else:
         label = "question"
         results_df = base_requirement_table(requirement_text)
-        final_dict = response_constructor(results_df)
-        final_res, final_res_dict = bot_response(final_dict)
+        final_dict, detailedPred = response_constructor(results_df)
+        final_res, final_res_dict = bot_response(final_dict, detailedPred)
         ambiguous = final_dict['total_ambiguity']
         res = final_res_dict
         condition_id = 'C'

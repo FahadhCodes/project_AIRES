@@ -42,19 +42,6 @@ function removeThinkingBubble() {
   if (el) el.remove();
 }
 
-// function addBotMessage(text, statusClass, metaText) {
-//   const msg = document.createElement("div");
-//   msg.className = `msg msg--bot ${statusClass ? "msg--" + statusClass : ""}`;
-//   msg.innerHTML = `
-//         <div class="msg-label">AIRE</div>
-//         <div class="bubble"></div>
-//         ${metaText ? `<div class="meta-tag"></div>` : ""}
-//     `;
-//   msg.querySelector(".bubble").innerHTML = text; // Based on the status class we can inject the intractive Q&A chat-response
-//   if (metaText) msg.querySelector(".meta-tag").textContent = metaText;
-//   thread.appendChild(msg);
-//   scrollToBottom();
-// }
 function questions(ambiguity, token) {
   let questions_string = "";
   Object.entries(vocab.respons.AMBIGUITY_CLARIFICATION_QUESTIONS[ambiguity]).forEach(([key, val]) => {
@@ -63,10 +50,11 @@ function questions(ambiguity, token) {
     <div class="question-item">
       <div class="question-number">${parseInt(key) + 1}</div>
       <div class="question-content">
-        <div class="question-text">${val}</div>
+        <div class="question-text qn-${parseInt(key) + 1}" id = "${ambiguity}">${val}</div>
         <div class="answer-field-wrap d-flex">
           <textarea
-            class="answer-field token-${token}"
+            class="answer-field token-${token} qn-${parseInt(key) + 1}"
+            name = "${ambiguity}_${parseInt(key) + 1}"
             rows="1"
             placeholder="e.g. Search by category, price filter, and wishlist..."
             oninput="
@@ -75,7 +63,6 @@ function questions(ambiguity, token) {
             "
             data-card="${dataCard}"
           ></textarea>
-          <button class="answer-send-btn" title="Save answer">✓</button>
         </div>
       </div>
     </div>
@@ -137,14 +124,15 @@ function addBotMessage(data, statusClass, metaText) {
         <div class="clarification-progress">
           <div class="clarification-progress-fill" id="progressFill-${currentToken}"></div>
         </div>
-
-        <div class="ambiguity-section">
-          <div class="ambiguity-section-title">Clarification Required</div>
-          ${str}
-        </div>
-        <div class="submit-all-row">
-          <button class="btn-aire-ghost" onclick="skipAll('${currentToken}')">Skip for now</button>
-          <button class="btn-aire-primary" onclick="submitAll('${currentToken}')">✓ Submit Clarifications</button>
+        <div id="form_${currentToken}">
+          <div class="ambiguity-section">
+            <div class="ambiguity-section-title">Clarification Required</div>
+            ${str}
+          </div>
+          <div class="submit-all-row">
+            <button class="btn-aire-ghost" onclick="skipAll('${currentToken}')">Skip for now</button>
+            <button class="btn-aire-primary" onclick="submitAll('${currentToken}')">✓ Submit Clarifications</button>
+          </div>
         </div>
       </div>
       <div class="meta-tag">${metaText || ""}</div>    
@@ -154,6 +142,51 @@ function addBotMessage(data, statusClass, metaText) {
   document.getElementById("thread").appendChild(msg);
   scrollToBottom();
 }
+function clientAnswer(data) {
+  if (Object.keys(data).length === 0) return;
+  const questionArr = [];
+  const answerArr = [];
+  const ambiguities = [];
+  const formElement = document.getElementById(`form_${data.token}`);
+  const questions = formElement.querySelectorAll(".question-text");
+  const answers = formElement.querySelectorAll(".answer-field");
+
+  questions.forEach((element) => {
+    questionArr.push(element.textContent);
+    ambiguities.push(element.id);
+  });
+  answers.forEach((element) => {
+    answerArr.push(element.value.trim());
+  });
+  console.log("Questions:", questionArr);
+  console.log("Ambiguities:", ambiguities);
+  console.log("Answers:", answerArr);
+  // answerArr.forEach((val) => {
+  //   if (val == "") {
+  //     let idx = answerArr.indexOf(val);
+  //     console.log(idx, val);
+  //     questionArr.splice(idx, 1);
+  //     answerArr.splice(idx, 1);
+  //   }
+  // });
+  return [questionArr, answerArr, ambiguities];
+}
+async function sendAnswers(res) { //Sending cooked JSON to Database
+  try {
+    const resplonse = await fetch("/api/database", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(res),
+    });
+
+    if (!resplonse.ok) {
+      console.log("STATUS:", resplonse.statusText);
+    }
+  } catch (error) {
+    console.log("ERROR:", error);
+  }
+}
+
 async function sendMessage(text) {
   addUserMessage(text);
   input.value = "";
@@ -201,71 +234,6 @@ function autoResize(el) {
   el.style.height = Math.min(el.scrollHeight, 120) + "px";
 }
 
-// // ── Progress tracking ─────────────────────────────────────────────────────
-// function checkProgress(token) {
-//   // Query live textareas currently in the DOM
-//   const fields = document.querySelectorAll(`.answer-field.${token}`);
-
-//   if (fields.length === 0) return; // Prevent division by zero
-
-//   let answered = 0;
-
-//   fields.forEach((field) => {
-//     if (field.value.trim().length > 0) {
-//       answered++;
-//     }
-//   });
-
-//   const pct = Math.round((answered / fields.length) * 100);
-
-//   // Update UI elements safely
-//   const progressFill = document.getElementById("progressFill");
-//   const progressLabel = document.getElementById("progressLabel");
-
-//   if (progressFill) progressFill.style.width = pct + "%";
-//   if (progressLabel) progressLabel.textContent = `${answered} / ${fields.length} Questions answered`;
-// }
-
-// // ── Submit all clarifications ─────────────────────────────────────────────
-// function submitAll(token) {
-//   document.getElementById(`${token}`).style.display = "block";
-//   const textAreas = document.querySelectorAll(`.answer-field.${token}`);
-//   textAreas.forEach((input) => {
-//     input.disabled = true;
-//   });
-//   const tokenMsg = document.createElement("div");
-//   tokenMsg.className = "msg msg--bot queued";
-//   tokenMsg.innerHTML = `
-//           <div class="msg-label">AIRE</div>
-//           <div class="bubble">
-//             ✅ Thank you, your clarifications have been recorded. A Business Analyst will review your requirement and we will follow up shortly. Your
-//             token number is <strong>#${token}</strong>.
-//           </div>`;
-//   document.getElementById("thread").appendChild(tokenMsg);
-//   document.getElementById("thread").scrollTop = thread.scrollHeight;
-// }
-
-// // ── Skip ──────────────────────────────────────────────────────────────────
-// function skipAll(token) {
-//   const skipMsg = document.createElement("div");
-//   skipMsg.className = "msg msg--user";
-//   skipMsg.innerHTML = `
-//       <div class="msg-label">You</div>
-//       <div class="bubble">I'll clarify these later.</div>`;
-
-//   document.getElementById("thread").appendChild(skipMsg);
-//   document.getElementById(`${token}`).style.display = "none";
-
-//   const tokenMsg = document.createElement("div");
-//   tokenMsg.className = "msg msg--bot queued";
-//   tokenMsg.innerHTML = `
-//       <div class="msg-label">AIRE</div>
-//       <div class="bubble">Understood. Your requirement has been saved with token <strong>#${token}</strong>.
-//           Our team will reach out to clarify the open points.</div>`;
-//   document.getElementById("thread").appendChild(tokenMsg);
-//   document.getElementById("thread").scrollTop = thread.scrollHeight;
-// }
-
 // ── Progress tracking ─────────────────────────────────────────────────────
 function checkProgress(token) {
   const fields = document.querySelectorAll(`.token-${token}`);
@@ -294,7 +262,20 @@ function submitAll(token) {
   textAreas.forEach((input) => {
     input.disabled = true;
   });
-
+  const [questions, answers, ambiguities] = clientAnswer(DATA);
+  const obj = {
+    questions: questions, //Array
+    answers: answers, //Array
+    ambiguities: ambiguities, //Array
+    session: {
+      status: DATA.status, //String
+      token: DATA.token, //String
+      label: DATA.label, //String
+      ambiguous: DATA.ambiguous, //int
+      reply: DATA.reply, //Object
+    },
+  };
+  sendAnswers(obj); // Storing to DB
   const tokenMsg = document.createElement("div");
   tokenMsg.className = "msg msg--bot queued";
   tokenMsg.innerHTML = `
@@ -334,3 +315,7 @@ function skipAll(token) {
   thread.appendChild(tokenMsg);
   thread.scrollTop = thread.scrollHeight;
 }
+
+// BA_DASHBOARD---------------------------------------------------------------------------------------------
+
+// BA_DASHBOARD---------------------------------------------------------------------------------------------

@@ -19,8 +19,10 @@ expects {"confidence": float, "label": str, "message": str} back.
 
 from flask import render_template, request, jsonify
 import uuid
-from AIRE import app
+from AIRE import app, db
 from AIRE.vocab import Vocab
+from AIRE.query import reconstruct_payload
+from AIRE.models import save_session_payload, Session, Sentence, Clarification, AmbiguityResult
 from AIRE.ml_engine import classify_requirement
 from AIRE.label_mapper import map_label_to_response
 import json
@@ -34,6 +36,44 @@ REQUIREMENTS_STORE = {}
 def index():
     """Serve the chatbot UI."""
     return render_template("index.html")
+
+
+@app.route("/api/database", methods=["POST"])
+def adder():
+    data = request.get_json(silent=True) or {}
+    que = data.get("questions")
+    ans = data.get("answers")
+    # print(data)
+    try:
+        save_session_payload(data)
+        db.session.commit()
+        return {"status": "success"}, 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"DB Error: {e}")
+        return {"status": "error", "message": str(e)}, 500
+
+
+@app.route("/dashboard")
+def dashboard_page():
+    sessions = Session.query.order_by(Session.submitted_at.desc()).all()
+    tokens = [s.token for s in sessions]
+    default_payload = reconstruct_payload(tokens[0]) if tokens else {}
+
+    # Renders the full HTML template
+    return render_template("ba_dashboard.html", tokens=tokens, user=default_payload)
+
+
+@app.route("/api/dashboard", methods=["POST"])
+def api_dashboard():
+    data = request.get_json(silent=True) or {}
+    token = (data.get("tokenNo") or "").strip()
+
+    payload = reconstruct_payload(token)
+    with open("data.json", "w") as f:
+        f.write(json.dumps(payload))
+    return jsonify(payload)  # Returns JSON data for fetch()
 
 
 @app.route("/api/chat", methods=["POST"])

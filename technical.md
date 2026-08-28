@@ -246,3 +246,96 @@ Specifically, You have mentioned,
 (4) Can more than one role perform this action?
 (5) Who should be responsible when this action requires approval?
 ```
+
+# Integrating with chat-bot UI
+
+---
+
+**24/08/2026 - Log**
+
+---
+
+Today I made some changes in the UI of the chat-bot and connected the AI models, It sends responses to the JavaScript, in here the server is the `routes.py` and the reciever is `chat.js` the `chat.js` send a `request` as `POST` method to the `routes.py` and the `routes.py` feed it to the AI-models,
+
+### `routes.py` request reciever
+
+```python
+data = request.get_json(silent=True) or {}
+    requirement_text = (data.get("message") or "").strip()
+
+```
+
+The above script used for take request from the `chat.js` and the below script is the response,
+
+```python
+ response_payload = {
+        "status": status,
+        "token": token,
+        "label": label,
+        "ambiguous": ambiguous,
+        "reply": reply_text,
+        "vocab": Vocab
+    }
+```
+
+### `chat.js` request sender
+
+This `chat.js` read the chat form `DOM` element of the `index.html`
+
+**`index.html` Form element**
+
+```html
+<form class="composer m-1 p-2 rounded-pill" id="composer" autocomplete="off">
+  <input type="text" id="messageInput" placeholder="e.g. The system should let admins reset a user's password" autocomplete="off" />
+  <button type="submit" id="sendBtn" aria-label="Send">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path d="M3 11L21 3L13 21L11 13L3 11Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+    </svg>
+  </button>
+</form>
+```
+
+**`chat.js` request sending script to the server**
+
+```javascript
+async function sendMessage(text) {
+  addUserMessage(text);
+  input.value = "";
+  sendBtn.disabled = true;
+  addThinkingBubble();
+
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text }),
+    });
+
+    const data = await response.json();
+    removeThinkingBubble();
+
+    if (!response.ok) {
+      addBotMessage(data || "Something went wrong⚠️. Please try again.", "queued", null);
+      return;
+    }
+
+    const metaText = `token ${data.token} · label ${data.label} · ambiguous ${data.ambiguous}`;
+    addBotMessage(data, data.status, metaText);
+  } catch (err) {
+    removeThinkingBubble();
+    addBotMessage("Connection issue❌ couldn't reach the back-end.", "queued", null);
+    console.error(err);
+  } finally {
+    sendBtn.disabled = false;
+    input.focus();
+  }
+}
+
+composer.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const text = input.value.trim();
+  if (!text) return;
+  sendMessage(text);
+});
+input.focus();
+```

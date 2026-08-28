@@ -6,18 +6,12 @@ import numpy as np
 import json
 import joblib
 import scipy.sparse as sp
-from sentence_transformers import SentenceTransformer
-import os
-# 1. Suppress TensorFlow C++ logging level (0 = ALL, 1 = Filter INFO, 2 = Filter WARNING, 3 = Filter ERROR)
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-# 2. Disable oneDNN floating-point warning
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-import tensorflow as tf  # noqa
-import keras  # noqa
+
 
 with open('AIRE_project/AIRE/vocab.json', 'r') as f:  # change vocab.json to vocab1.json imple
     Vocab = json.load(f)
-
+with open("AIRE_project/AIRE/edge_values.json", 'r') as f:
+    edge_values = json.load(f)
 nlp = spacy.load('en_core_web_md')
 
 
@@ -47,9 +41,19 @@ def greet(text):
     }
 
 
-BA_MODEL = joblib.load('AIRE_project/AIRE/ba_brain_model.pkl')
-VOCAB_MODEL = joblib.load('AIRE_project/AIRE/ba_brain_tfidf.pkl')
-AA_MODEL = keras.models.load_model("AIRE_project/AIRE/multitask_ambiguity_model.keras")
+def brain():
+    import os
+    # 1. Suppress TensorFlow C++ logging level (0 = ALL, 1 = Filter INFO, 2 = Filter WARNING, 3 = Filter ERROR)
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+    # 2. Disable oneDNN floating-point warning
+    os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+    import keras  # noqa
+    BA_MODEL = joblib.load('AIRE_project/AIRE/ba_brain_model.pkl')
+    VOCAB_MODEL = joblib.load('AIRE_project/AIRE/ba_brain_tfidf.pkl')
+    AA_MODEL = keras.models.load_model("AIRE_project/AIRE/multitask_ambiguity_model.keras")
+    return BA_MODEL, VOCAB_MODEL, AA_MODEL
+
+
 nlp = spacy.load('en_core_web_md')
 
 with open('AIRE_project/AIRE/requirement_classifier.json', 'r') as f:
@@ -77,6 +81,7 @@ def sententizer(text):
 
 
 def input_text(sent):
+    BA_MODEL, VOCAB_MODEL, AA_MODEL = brain()
     # Step 1 — preprocess and transform (NOT fit_transform)
     x_tfidf = VOCAB_MODEL.transform([sent])
 
@@ -104,6 +109,7 @@ def domain_keyword_features(text):
 
 
 def get_confidence_fast(text):
+    BA_MODEL, VOCAB_MODEL, AA_MODEL = brain()
     try:
         text = str(text)
         # TF-IDF transform only — no spaCy
@@ -123,15 +129,18 @@ def get_confidence_fast(text):
 
 
 def wordEmbedding(sents):
+    from sentence_transformers import SentenceTransformer
+
     # Load pre-trained model (downloads once, ~80MB)
     embedder = SentenceTransformer('all-MiniLM-L6-v2')
     return np.array([embedder.encode(x, show_progress_bar=False) for x in sents])
 
 
-domain_list = ['Healthcare', 'Finance', 'E-commerce', 'Manufacturing', 'Telecommunications']
-domain_dict = {}
-for i, x in enumerate(domain_list):
-    domain_dict[x] = i
+domain_dict = {'Telecommunications': 0,
+               'Finance': 1,
+               'E-commerce': 2,
+               'Healthcare': 3,
+               'Manufacturing': 4}
 
 
 def decode_domain(df, domain_dict):
@@ -160,6 +169,8 @@ def convert_numpy_types(data):
 
 
 def base_requirement_table(RAW_REQ):  # GENERATE A PANDAS TABLE --> return : a DataFrame
+    import tensorflow as tf  # noqa
+    BA_MODEL, VOCAB_MODEL, AA_MODEL = brain()
     # Preproecessing and sentenctizer Layer
     preprocessed, raw = sententizer(RAW_REQ)
     # RE Type classification Layer
@@ -170,13 +181,12 @@ def base_requirement_table(RAW_REQ):  # GENERATE A PANDAS TABLE --> return : a D
     preds = AA_MODEL.predict(Vectors)
 
     # Apply your optimal decision thresholds AA_MODEL predictions
-    has_ambiguity_preds = (preds[0] >= 0.41300000000000026).astype(int)
+    has_ambiguity_preds = (preds[0] >= edge_values["has_ambiguity_preds"][0]).astype(int)
     domain_preds = np.array([np.argmax(i) for i in preds[1]])
-    SemanticAmbiguity_pred = (preds[2][:, 0] >= 0.41500000000000026).astype(int)
-    ScopeAmbiguity_pred = (preds[2][:, 1] >= 0.29300000000000015).astype(int)
-    ActorAmbiguity_pred = (preds[2][:, 2] >= 0.7160000000000005).astype(int)
-    process_preds = (preds[3] >= 0.7280000000000005).astype(int)
-
+    SemanticAmbiguity_pred = (preds[2][:, 0] >= edge_values["SemanticAmbiguity_pred"][0]).astype(int)
+    ScopeAmbiguity_pred = (preds[2][:, 1] >= edge_values["ScopeAmbiguity_pred"][0]).astype(int)
+    ActorAmbiguity_pred = (preds[2][:, 2] >= edge_values["ActorAmbiguity_pred"][0]).astype(int)
+    process_preds = (preds[3] >= edge_values["process_preds"][0]).astype(int)
     # Combine all predictions into one DataFrame
     results_df = pd.DataFrame({
         'Raw_requirement': raw,
@@ -234,12 +244,12 @@ def response_constructor(results_df):  # Convert the prediction into a python Di
         'text': text,
         'requirements': requirements[0]
     })
-    return convert_numpy_types(final_dict)
+    return convert_numpy_types(final_dict), results_df.to_json()
 
 #  High-Lavel Functions-----------------------------------------------------------
 
 
-def bot_response(final_dict):  # Collecting all of the ambiguities type in the paragraph ---> return: a Final response
+def bot_response(final_dict, detailedPred):  # Collecting all of the ambiguities type in the paragraph ---> return: a Final response
     detected_requirement_types = final_dict['requirements'].keys()
     detected_ambiguities = set()
     initial_prompts = set()
@@ -293,7 +303,8 @@ def bot_response(final_dict):  # Collecting all of the ambiguities type in the p
         'DOMAIN': final_dict['domain'],
         'DETECTED_AMBIGUITES': [x for x in list(detected_ambiguities)],
         'DESCRIPTION': string,
-        'GROUPED_BY_AMBIGUITY': grouped_by_ambiguity
+        'GROUPED_BY_AMBIGUITY': grouped_by_ambiguity,
+        'DETAILED_PREDICTIONS': detailedPred
     })
     return final_response, final_res_dict
 #  High-Lavel Functions-----------------------------------------------------------

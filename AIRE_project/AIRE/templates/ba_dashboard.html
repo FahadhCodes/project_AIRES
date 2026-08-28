@@ -1,0 +1,1582 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AIRE — Business Analyst Dashboard</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css"
+      integrity="sha512-QeR2VH+lsBE5LSAe1Q5EnTBbe7XTBubt8dG93Y7gidSgdMCr8nVqKcfKAMyN96SV8KDbZVTDXChatu5G2KQGzg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <style>
+      /* ══════════════════════════════════════════════════
+       DESIGN TOKENS
+    ══════════════════════════════════════════════════ */
+      :root {
+        --dash-bg: #f0f4f8;
+        --dash-sidebar: #0d1b2a;
+        --dash-surface: #ffffff;
+        --dash-surface-alt: #f8fafc;
+        --dash-teal: #0d9488;
+        --dash-teal-lt: #14b8a6;
+        --dash-teal-dim: rgba(13, 148, 136, 0.1);
+        --dash-navy: #0d1b2a;
+        --dash-slate: #334155;
+        --dash-text: #1e293b;
+        --dash-text-muted: #7a99b0;
+        --dash-orange: #f97316;
+        --dash-orange-dim: rgba(249, 115, 22, 0.1);
+        --dash-purple: #7c3aed;
+        --dash-purple-dim: rgba(124, 58, 237, 0.1);
+        --dash-green: #10b981;
+        --dash-green-dim: rgba(16, 185, 129, 0.1);
+        --dash-red: #ef4444;
+        --dash-red-dim: rgba(239, 68, 68, 0.1);
+        --dash-yellow: #f59e0b;
+        --dash-blue: #3b82f6;
+        --dash-radius: 12px;
+        --dash-radius-sm: 8px;
+        --dash-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.05);
+        --dash-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+        --sidebar-width: 240px;
+      }
+
+      /* ══════════════════════════════════════════════════
+       RESET & BASE
+    ══════════════════════════════════════════════════ */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          "Segoe UI",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        /* background: var(--dash-bg); */
+        background-image: radial-gradient(hsl(213, 76%, 20%), hsl(213, 75%, 10%), hsl(210, 56%, 5%), hsl(207, 58%, 2%), hsl(0, 0%, 0%));
+
+        color: var(--aire-text);
+        font-size: 13px;
+        line-height: 1.6;
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* ══════════════════════════════════════════════════
+       SIDEBAR
+    ══════════════════════════════════════════════════ */
+      .sidebar {
+        width: var(--sidebar-width);
+        background: var(--dash-sidebar);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 50;
+      }
+
+      .sidebar-logo-area {
+        padding: 20px 18px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      }
+
+      .sidebar-logo-mark {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+      }
+
+      .sidebar-logo-text {
+        font-family: "SF Mono", "JetBrains Mono", "Courier New", monospace;
+        font-size: 1.6em;
+        font-weight: bolder;
+        color: #fff;
+        letter-spacing: -0.3px;
+      }
+
+      .sidebar-logo-sub {
+        font-size: 9px;
+        color: rgba(255, 255, 255, 0.35);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 1px;
+      }
+
+      .sidebar-nav {
+        padding: 12px 0;
+        flex: 1;
+      }
+
+      .sidebar-nav-label {
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        color: rgba(255, 255, 255, 0.25);
+        padding: 10px 18px 4px;
+      }
+
+      .sidebar-nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 18px;
+        color: rgba(255, 255, 255, 0.55);
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        border-left: 3px solid transparent;
+        transition: all 0.15s;
+        text-decoration: none;
+      }
+
+      .sidebar-nav-item:hover {
+        color: rgba(255, 255, 255, 0.85);
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .sidebar-nav-item.nav-active {
+        color: var(--dash-teal-lt);
+        background: rgba(13, 148, 136, 0.12);
+        border-left-color: var(--dash-teal);
+      }
+
+      .sidebar-nav-icon {
+        font-size: 14px;
+        width: 18px;
+        text-align: center;
+      }
+
+      .sidebar-nav-badge {
+        margin-left: auto;
+        background: var(--dash-orange);
+        color: #fff;
+        font-size: 9px;
+        font-weight: 700;
+        padding: 1px 6px;
+        border-radius: 10px;
+      }
+
+      .sidebar-bottom {
+        padding: 14px 18px;
+        border-top: 1px solid rgba(255, 255, 255, 0.07);
+      }
+
+      .sidebar-user-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .sidebar-user-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #334155, #475569);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 700;
+        color: #fff;
+        flex-shrink: 0;
+      }
+
+      .sidebar-user-name {
+        font-size: 11px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      .sidebar-user-role {
+        font-size: 9px;
+        color: rgba(255, 255, 255, 0.3);
+      }
+
+      /* ══════════════════════════════════════════════════
+       MAIN CONTENT AREA
+    ══════════════════════════════════════════════════ */
+      .dashboard-main {
+        margin-left: var(--sidebar-width);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      /* ── Top bar ────────────────────────────────────── */
+      .topbar {
+        background-color: #ffffff0e;
+        backdrop-filter: blur(50px);
+        border-bottom: 1px solid var(--aire-teal-lt);
+        padding: 0 24px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 40;
+      }
+
+      .topbar-left h1 {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--aire-text);
+        letter-spacing: -0.2px;
+      }
+
+      .topbar-left p {
+        font-size: 11px;
+        color: var(--dash-text-muted);
+        margin-top: 1px;
+      }
+
+      .topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .topbar-btn {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 12px;
+        border-radius: var(--dash-radius-sm);
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: all 0.15s;
+      }
+
+      .topbar-btn-ghost {
+        background: transparent;
+        border: 1px solid var(--aire-teal-lt);
+        color: var(--dash-text-muted);
+      }
+
+      .topbar-btn-ghost:hover {
+        border-color: var(--dash-teal);
+        color: var(--dash-teal);
+      }
+
+      .topbar-btn-primary {
+        background: var(--dash-teal);
+        color: #fff;
+      }
+
+      .topbar-btn-primary:hover {
+        background: var(--dash-teal-lt);
+      }
+
+      .live-indicator {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 10px;
+        color: var(--dash-green);
+        font-weight: 600;
+      }
+
+      .live-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--dash-green);
+        animation: pulse-dot 2s infinite;
+      }
+
+      @keyframes pulse-dot {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.5;
+          transform: scale(0.8);
+        }
+      }
+
+      /* ── Page body ──────────────────────────────────── */
+      .dashboard-body {
+        padding: 24px;
+        flex: 1;
+      }
+
+      /* ══════════════════════════════════════════════════
+       KPI STAT CARDS ROW
+    ══════════════════════════════════════════════════ */
+      .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 20px;
+      }
+
+      .kpi-card {
+        background: #09224086;
+        color: var(--aire-text);
+        border: 1px solid var(--accent);
+        border-radius: var(--dash-radius);
+        padding: 16px 18px;
+        box-shadow: var(--dash-shadow);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .kpi-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+      }
+
+      .kpi-card.kpi-teal::before {
+        background: var(--dash-teal);
+      }
+      .kpi-card.kpi-orange::before {
+        background: var(--dash-orange);
+      }
+      .kpi-card.kpi-purple::before {
+        background: var(--dash-purple);
+      }
+      .kpi-card.kpi-green::before {
+        background: var(--dash-green);
+      }
+
+      .kpi-card-label {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--dash-text-muted);
+        margin-bottom: 8px;
+      }
+
+      .kpi-card-value {
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--aire-text);
+        letter-spacing: -1px;
+        line-height: 1;
+        margin-bottom: 4px;
+      }
+
+      .kpi-card-sub {
+        font-size: 11px;
+        color: var(--aire-teal-lt);
+      }
+
+      .kpi-card-icon {
+        position: absolute;
+        top: 14px;
+        right: 16px;
+        font-size: 22px;
+        opacity: 0.12;
+      }
+
+      /* ══════════════════════════════════════════════════
+       MAIN GRID — 2 columns
+    ══════════════════════════════════════════════════ */
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      /* ── Panel card ─────────────────────────────────── */
+      .panel {
+        background: #09224086;
+        color: var(--aire-text);
+        border: 1px solid var(--accent);
+        box-shadow: var(--dash-shadow);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      .panel-header {
+        padding: 14px 18px;
+        background: var(--aire-card);
+        border-bottom: 1px solid var(--aire-teal-lt);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .panel-header-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .panel-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        flex-shrink: 0;
+      }
+
+      .panel-icon-teal {
+        background: var(--dash-teal-dim);
+      }
+      .panel-icon-orange {
+        background: var(--dash-orange-dim);
+      }
+      .panel-icon-purple {
+        background: var(--dash-purple-dim);
+      }
+      .panel-icon-green {
+        background: var(--dash-green-dim);
+      }
+
+      .panel-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--aire-text);
+      }
+
+      .panel-subtitle {
+        font-size: 10px;
+        color: var(--aire-teal-lt);
+        margin-top: 1px;
+      }
+
+      .panel-body {
+        padding: 16px 18px;
+      }
+
+      /* ══════════════════════════════════════════════════
+       REQUIREMENT TABLE
+    ══════════════════════════════════════════════════ */
+      .req-table-wrap {
+        overflow-x: auto;
+      }
+
+      .req-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .req-table thead th {
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--dash-text-muted);
+        padding: 8px 12px;
+        background: var(--aire-card);
+        border-bottom: 1px solid var(--aire-teal-lt);
+        text-align: left;
+        white-space: nowrap;
+      }
+
+      .req-table tbody tr {
+        border-bottom: 1px solid var(--aire-teal-lt);
+        transition: background 0.1s;
+      }
+
+      .req-table tbody tr:hover {
+        background: var(--aire-teal-dim);
+        color: var(--aire-teal-lt);
+      }
+
+      .req-table tbody tr:last-child {
+        border-bottom: none;
+      }
+
+      .req-table td {
+        padding: 10px 12px;
+        vertical-align: top;
+      }
+
+      .req-sentence-text {
+        font-size: 12px;
+        color: var(--aire-text);
+        line-height: 1.5;
+        max-width: 280px;
+      }
+
+      .req-type-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .tag-functional {
+        background: rgba(16, 185, 129, 0.12);
+        color: #059669;
+        border: 1px solid rgba(16, 185, 129, 0.25);
+      }
+      .tag-security {
+        background: rgba(239, 68, 68, 0.1);
+        color: #dc2626;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+      }
+      .tag-performance {
+        background: rgba(59, 130, 246, 0.1);
+        color: #2563eb;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+      }
+      .tag-usability {
+        background: rgba(124, 58, 237, 0.1);
+        color: #7c3aed;
+        border: 1px solid rgba(124, 58, 237, 0.2);
+      }
+      .tag-operational {
+        background: rgba(245, 158, 11, 0.1);
+        color: #d97706;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+      }
+      .tag-nonfunctional {
+        background: rgba(100, 116, 139, 0.12);
+        color: #475569;
+        border: 1px solid rgba(100, 116, 139, 0.2);
+      }
+
+      .confidence-bar-wrap {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .confidence-bar-track {
+        width: 60px;
+        height: 4px;
+        background: #e3ece830;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .confidence-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        background: var(--dash-teal);
+      }
+
+      .confidence-bar-fill.fill-low {
+        background: var(--dash-red);
+      }
+      .confidence-bar-fill.fill-medium {
+        background: var(--dash-yellow);
+      }
+      .confidence-bar-fill.fill-high {
+        background: var(--dash-green);
+      }
+
+      .confidence-value {
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--dash-text-muted);
+      }
+
+      /* Ambiguity flag pills */
+      .amb-flags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .amb-flag {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 9px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .flag-semantic {
+        background: rgba(124, 58, 237, 0.1);
+        color: #7c3aed;
+        border: 1px solid #7c3aed;
+      }
+      .flag-scope {
+        background: rgba(249, 115, 22, 0.1);
+        color: #ea580c;
+        border: 1px solid #ea580c;
+      }
+      .flag-actor {
+        background: rgba(59, 130, 246, 0.1);
+        color: #2563eb;
+        border: 1px solid #2563eb;
+      }
+      .flag-process {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid #dc2626;
+        color: #dc2626;
+      }
+      .flag-none {
+        background: rgba(16, 185, 129, 0.1);
+        color: #059669;
+        border: 1px solid #059669;
+      }
+
+      .amb-status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      .dot-ambiguous {
+        background: var(--dash-red);
+      }
+      .dot-clear {
+        background: var(--dash-green);
+      }
+
+      /* ══════════════════════════════════════════════════
+       AMBIGUITY BREAKDOWN PANEL (right column)
+    ══════════════════════════════════════════════════ */
+      .ambiguity-type-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--aire-teal-lt);
+      }
+
+      .ambiguity-type-row:last-child {
+        border-bottom: none;
+      }
+
+      .ambiguity-type-icon-box {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+
+      .amb-icon-semantic {
+        background: rgba(124, 58, 237, 0.12);
+      }
+      .amb-icon-scope {
+        background: rgba(249, 115, 22, 0.12);
+      }
+      .amb-icon-actor {
+        background: rgba(59, 130, 246, 0.12);
+      }
+      .amb-icon-process {
+        background: rgba(239, 68, 68, 0.12);
+      }
+
+      .ambiguity-type-info {
+        flex: 1;
+      }
+
+      .ambiguity-type-name {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--aire-text);
+      }
+
+      .ambiguity-type-sentences {
+        font-size: 10px;
+        color: var(--dash-text-muted);
+        margin-top: 1px;
+      }
+
+      .ambiguity-type-count {
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--aire-text);
+        flex-shrink: 0;
+      }
+
+      /* ══════════════════════════════════════════════════
+       CLARIFICATIONS PANEL (full width)
+    ══════════════════════════════════════════════════ */
+      .clarification-row {
+        display: flex;
+        gap: 14px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--aire-teal-lt);
+        align-items: flex-start;
+      }
+
+      .clarification-row:last-child {
+        border-bottom: none;
+      }
+
+      .clarification-index {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--aire-teal-dim);
+        border: 1px solid rgba(13, 148, 136, 0.3);
+        color: var(--aire-teal-lt);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9px;
+        font-weight: 700;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .clarification-content {
+        flex: 1;
+      }
+
+      .clarification-question {
+        font-size: 12px;
+        color: var(--aire-text);
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .clarification-answer {
+        font-size: 12px;
+        color: var(--accent-soft);
+        background: var(--aire-card);
+        border: 1px solid var(--aire-border);
+        border-radius: var(--dash-radius-sm);
+        padding: 6px 10px;
+        line-height: 1.5;
+      }
+
+      .clarification-answer.answer-pending {
+        color: var(--dash-text-muted);
+        font-style: italic;
+        border-style: dashed;
+      }
+
+      .clarification-type-tag {
+        font-size: 9px;
+        font-weight: 700;
+        padding: 1px 6px;
+        border-radius: 4px;
+        margin-bottom: 5px;
+        display: inline-block;
+      }
+
+      .clarification-answered-badge {
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .answered-yes {
+        background: var(--dash-green-dim);
+        color: var(--dash-green);
+        font-size: 9px;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 20px;
+        border: 1px solid rgba(16, 185, 129, 0.25);
+      }
+
+      .answered-no {
+        background: var(--dash-orange-dim);
+        color: var(--dash-orange);
+        font-size: 9px;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 20px;
+        border: 1px solid rgba(249, 115, 22, 0.25);
+      }
+
+      /* ══════════════════════════════════════════════════
+       SESSION INFO CARD
+    ══════════════════════════════════════════════════ */
+      .session-info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .session-info-item {
+        padding: 10px 12px;
+        background: rgba(3, 105, 161, 0.2);
+        border: 1px solid rgba(3, 105, 161, 0.4);
+        border-radius: var(--dash-radius-sm);
+      }
+
+      .session-info-label {
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--aire-teal-lt);
+        margin-bottom: 3px;
+      }
+
+      .session-info-value {
+        font-size: 13px;
+        font-weight: 700;
+        color: #38bdf8;
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 700;
+      }
+
+      .status-clarify {
+        background: var(--dash-orange-dim);
+        color: var(--dash-orange);
+        border: 1px solid rgba(249, 115, 22, 0.3);
+      }
+      .status-resolved {
+        background: var(--dash-green-dim);
+        color: var(--dash-green);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+      .status-pending {
+        background: rgba(100, 116, 139, 0.1);
+        color: #64748b;
+        border: 1px solid rgba(100, 116, 139, 0.3);
+      }
+
+      /* ══════════════════════════════════════════════════
+       CHART WRAPPERS
+    ══════════════════════════════════════════════════ */
+      .chart-container {
+        position: relative;
+        height: 180px;
+      }
+
+      /* ══════════════════════════════════════════════════
+       DOMAIN BADGE (large)
+    ══════════════════════════════════════════════════ */
+      .domain-display {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+        background: linear-gradient(135deg, rgba(13, 148, 136, 0.08), rgba(3, 105, 161, 0.08));
+        border: 1px solid rgba(3, 105, 161, 0.4);
+        border-radius: var(--dash-radius);
+        margin-bottom: 14px;
+      }
+
+      .domain-icon {
+        font-size: 24px;
+      }
+
+      .domain-name {
+        font-size: 16px;
+        font-weight: 800;
+        color: #38bdf8;
+        letter-spacing: -0.3px;
+      }
+
+      .domain-sub {
+        font-size: 10px;
+        color: var(--aire-teal-lt);
+      }
+
+      /* ══════════════════════════════════════════════════
+       DESCRIPTION TEXT
+    ══════════════════════════════════════════════════ */
+      .description-text {
+        background: rgba(249, 115, 22, 0.08);
+        border: 1px solid rgba(249, 115, 22, 0.2);
+        border-left: 3px solid var(--aire-orange);
+
+        font-size: 12px;
+        color: #fed7aa;
+        padding: 10px 12px;
+        border-radius: 0 var(--dash-radius-sm) var(--dash-radius-sm) 0;
+        line-height: 1.6;
+        margin-bottom: 14px;
+      }
+
+      /* ══════════════════════════════════════════════════
+       BOTTOM FULL-WIDTH GRID
+    ══════════════════════════════════════════════════ */
+      .dashboard-full-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ══════════════════════════════════════════════════
+     SIDEBAR
+══════════════════════════════════════════════════ -->
+    <aside class="sidebar">
+      <div class="sidebar-logo-area">
+        <a class="sidebar-logo-mark" href="#">
+          <div>
+            <div class="sidebar-logo-text">AIRE</div>
+            <div class="sidebar-logo-sub">Requirement Engineering</div>
+          </div>
+        </a>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="sidebar-nav-label">Active Tokens</div>
+        <div class="token_list">
+          {%for token in tokens%}
+          <div class="sidebar-nav-item tok" onclick="baDashboard('{{token}}')">#{{token}}</div>
+          {%endfor%}
+          <!-- <a class="sidebar-nav-item nav-active" href="#">#F7B66843</a> -->
+        </div>
+        <div class="sidebar-nav-label">Workspace</div>
+        <a class="sidebar-nav-item nav-active" href="#"> <span class="sidebar-nav-icon">📊</span> Dashboard </a>
+        <a class="sidebar-nav-item" href="#">
+          <span class="sidebar-nav-icon">📋</span> Requirements
+          <span class="sidebar-nav-badge">5</span>
+        </a>
+        <a class="sidebar-nav-item" href="#">
+          <span class="sidebar-nav-icon">⚠️</span> Ambiguities
+          <span class="sidebar-nav-badge">3</span>
+        </a>
+        <a class="sidebar-nav-item" href="#"> <span class="sidebar-nav-icon">💬</span> Clarifications </a>
+
+        <div class="sidebar-nav-label" style="margin-top: 8px">Analysis</div>
+        <a class="sidebar-nav-item" href="#"> <span class="sidebar-nav-icon">📝</span> User Stories </a>
+        <a class="sidebar-nav-item" href="#"> <span class="sidebar-nav-icon">🗺️</span> Use Case Diagram </a>
+        <a class="sidebar-nav-item" href="#"> <span class="sidebar-nav-icon">📈</span> Reports </a>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="sidebar-user-row">
+          <div class="sidebar-user-avatar">BA</div>
+          <div>
+            <div class="sidebar-user-name">Business Analyst</div>
+            <div class="sidebar-user-role">AIRE · Active</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ══════════════════════════════════════════════════
+     MAIN
+══════════════════════════════════════════════════ -->
+    <div class="dashboard-main">
+      <!-- Top bar -->
+      <div class="topbar">
+        <div class="topbar-left">
+          <h1>Requirement Analysis</h1>
+          <p id="topbarMeta">
+            <span class="badge bg-success tokenReplacer"></span>
+            <span>Submitted just now</span>
+          </p>
+        </div>
+        <div class="topbar-right">
+          <div class="live-indicator">
+            <div class="live-dot"></div>
+            Live
+          </div>
+          <button class="topbar-btn topbar-btn-ghost">↓ Export</button>
+          <button class="topbar-btn topbar-btn-primary">✓ Mark Resolved</button>
+        </div>
+      </div>
+
+      <!-- Dashboard body -->
+      <div class="dashboard-body">
+        <!-- ── KPI Row ─────────────────────────────────── -->
+        <div class="kpi-row">
+          <div class="kpi-card kpi-teal bubble msg-row msg--clarify">
+            <div class="kpi-card-label">Total Sentences</div>
+            <div class="kpi-card-value" id="total_sentances"></div>
+            <div class="kpi-card-sub">In this submission</div>
+            <div class="kpi-card-icon">📄</div>
+          </div>
+          <div class="kpi-card kpi-orange bubble msg-row msg--clarify">
+            <div class="kpi-card-label">Ambiguous Sentences</div>
+            <div class="kpi-card-value" id="detected_sentances"></div>
+            <div class="kpi-card-sub">100% flagged</div>
+            <div class="kpi-card-icon">⚠️</div>
+          </div>
+          <div class="kpi-card kpi-purple bubble msg-row msg--clarify">
+            <div class="kpi-card-label">Ambiguity Types</div>
+            <div class="kpi-card-value" id="ambiguityCount"></div>
+            <div class="kpi-card-sub" id="ambiguities"></div>
+            <div class="kpi-card-icon">🔍</div>
+          </div>
+          <div class="kpi-card kpi-green bubble msg-row msg--clarify">
+            <div class="kpi-card-label">Clarifications</div>
+            <div class="kpi-card-value" id="answerdQuestions"></div>
+            <div class="kpi-card-sub">Answered Questions by client</div>
+            <div class="kpi-card-icon">💬</div>
+          </div>
+        </div>
+        <!-- ── Bottom full row: charts + clarifications ── -->
+        <div class="dashboard-full-row">
+          <!-- Requirement type chart -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-header-left">
+                <div class="panel-icon panel-icon-purple">📊</div>
+                <div>
+                  <div class="panel-title">Requirement Type Distribution</div>
+                  <div class="panel-subtitle">How this submission is classified</div>
+                </div>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="chart-container">
+                <canvas id="reqTypeChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Clarifications panel -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-header-left">
+                <div class="panel-icon panel-icon-teal">💬</div>
+                <div>
+                  <div class="panel-title">Clarification Q&amp;A</div>
+                  <div class="panel-subtitle">Questions sent · client answers pending</div>
+                </div>
+              </div>
+            </div>
+            <div class="panel-body" style="max-height: 280px; overflow-y: auto">
+              <div id="clarificationList">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- /dashboard-full-row -->
+        <!-- ── Main grid: table + sidebar ────────────────── -->
+        <div class="dashboard-grid">
+          <!-- Left: Requirement table -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-header-left">
+                <div class="panel-icon panel-icon-teal">📋</div>
+                <div>
+                  <div class="panel-title">Sentence-level Analysis</div>
+                  <div class="panel-subtitle">Each sentence classified and checked for ambiguity</div>
+                </div>
+              </div>
+            </div>
+            <div class="req-table-wrap">
+              <table class="req-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Sentence</th>
+                    <th>Type</th>
+                    <th>Confidence</th>
+                    <th>Ambiguity Flags</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="sentenceTableBody">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Right: Session info + ambiguity breakdown -->
+          <div style="display: flex; flex-direction: column; gap: 14px">
+            <!-- Session info -->
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-header-left">
+                  <div class="panel-icon panel-icon-green">📜</div>
+                  <div>
+                    <div class="panel-title">Session Details</div>
+                  </div>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="domain-display">
+                  <div>
+                    <div class="domain-name" id="domain_name"></div>
+                    <div class="domain-sub">Detected domain</div>
+                  </div>
+                </div>
+                <div class="session-info-grid">
+                  <div class="session-info-item">
+                    <div class="session-info-label">Token</div>
+                    <div class="session-info-value tokenReplacer"></div>
+                  </div>
+                  <div class="session-info-item">
+                    <div class="session-info-label">Ambiguities</div>
+                    <div class="session-info-value" id="ambiguouspct">#N/A detected</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ambiguity type breakdown -->
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-header-left">
+                  <div class="panel-icon panel-icon-orange">⚠️</div>
+                  <div>
+                    <div class="panel-title">Ambiguity Breakdown</div>
+                  </div>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div class="description-text" id="ambiguityDescription">
+                  <!-- Populated by JS -->
+                </div>
+
+                <div id="ambiguityTypeList">
+                  <!-- Populated by JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- /dashboard-grid -->
+      </div>
+      <!-- /dashboard-body -->
+    </div>
+    <!-- /dashboard-main -->
+
+    <!-- ══════════════════════════════════════════════════
+     DATA + RENDERING SCRIPT
+══════════════════════════════════════════════════ -->
+    <script>
+          // /* ── Parse payload ──────────────────────────────── */
+          let PAYLOAD = {{ user | tojson | safe}};
+          let reply = PAYLOAD.session.reply;
+          let detailed = reply.DETAILED_PREDICTIONS;
+          let questions = PAYLOAD.questions;
+          let answers = PAYLOAD.answers;
+          // /* ── Parse payload ──────────────────────────────── */
+
+          // async---------------------------------------------------------------------
+          async function baDashboard(token) {
+            try {
+              const response = await fetch("/api/dashboard", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ tokenNo: token }),
+              });
+
+              if (!response.ok) {
+                console.error("ERROR:", response.statusText);
+                return;
+              }
+
+              const data = await response.json();
+
+              // 1. Update global payload variables
+              PAYLOAD = data;
+              reply = PAYLOAD.session.reply;
+              detailed = reply.DETAILED_PREDICTIONS;
+              questions = PAYLOAD.questions;
+              answers = PAYLOAD.answers;
+
+              // 2. Call your UI update function here!
+              updateUI();
+            } catch (error) {
+              console.error("Fetch Error:", error);
+            }
+          }
+
+          let reqChartInstance = null; // Store chart instance globally to destroy it on updates
+
+          function updateUI() {
+            renderCommonPageContent()
+            renderSentenceTable();
+            renderDescription();
+            renderAmbiguityTypeList();
+            renderClarifications();
+            renderReqTypeChart();
+          }
+          // async---------------------------------------------------------------------
+
+          /* ── Helpers ────────────────────────────────────── */
+          const TYPE_TAG_CLASS = {
+            Security: "tag-security",
+            Usability: "tag-usability",
+            Functional: "tag-functional",
+            Performance: "tag-performance",
+            Operational: "tag-operational",
+            "Non-Functional": "tag-nonfunctional",
+          };
+
+          const AMB_FLAG_CLASS = {
+            SemanticAmbiguity: "flag-semantic",
+            ScopeAmbiguity: "flag-scope",
+            ActorAmbiguity: "flag-actor",
+            ProcessExecutionAmbiguity: "flag-process",
+          };
+
+          const AMB_ICON = {
+            SemanticAmbiguity: "💬",
+            ScopeAmbiguity: "🎯",
+            ActorAmbiguity: "👤",
+            ProcessExecutionAmbiguity: "⚙️",
+          };
+
+          const AMB_ICON_CLASS = {
+            SemanticAmbiguity: "amb-icon-semantic",
+            ScopeAmbiguity: "amb-icon-scope",
+            ActorAmbiguity: "amb-icon-actor",
+            ProcessExecutionAmbiguity: "amb-icon-process",
+          };
+
+          const AMB_TYPE_LABEL = {
+            SemanticAmbiguity: "Semantic Ambiguity",
+            ScopeAmbiguity: "Scope Ambiguity",
+            ActorAmbiguity: "Actor Ambiguity",
+            ProcessExecutionAmbiguity: "Process Execution",
+          };
+
+          const AMB_TYPE_TAG_CLASS = {
+            ActorAmbiguity: "flag-actor",
+            ScopeAmbiguity: "flag-scope",
+            SemanticAmbiguity: "flag-semantic",
+          };
+
+          function confidenceFillClass(score) {
+            if (score >= 0.65) return "fill-high";
+            if (score >= 0.45) return "fill-medium";
+            return "fill-low";
+          }
+
+          function shortAmbLabel(key) {
+            const map = {
+              SemanticAmbiguity: "Semantic",
+              ScopeAmbiguity: "Scope",
+              ActorAmbiguity: "Actor",
+              ProcessExecutionAmbiguity: "Process",
+            };
+            return map[key] || key;
+          }
+          function renderCommonPageContent() {
+            const topbar = document.querySelectorAll(".tokenReplacer");
+            const allTokens = document.querySelectorAll(".tok");
+            topbar.forEach(el=>{
+              el.innerHTML = PAYLOAD.session.token;
+            });
+            allTokens.forEach((el)=>{
+
+              if (el.textContent.slice(1,el.textContent.length) == PAYLOAD.session.token){
+                el.classList.add("nav-active");
+              }else{
+                el.classList.remove("nav-active");
+              }
+            })
+
+            document.getElementById("total_sentances").innerText = Object.keys(PAYLOAD.session.reply.DETAILED_PREDICTIONS.Raw_requirement).length
+            document.getElementById("ambiguityCount").innerText = Object.keys(PAYLOAD.session.reply.GROUPED_BY_AMBIGUITY).length
+            document.getElementById("domain_name").innerText = PAYLOAD.session.reply.DOMAIN
+            const ambi = document.getElementById("ambiguities");
+            ambi.innerHTML = "";
+            Object.entries(PAYLOAD.session.reply.GROUPED_BY_AMBIGUITY).forEach((key)=>{
+              ambi.innerHTML+= `<span class="ambi amb-flag ${AMB_FLAG_CLASS[key[0]]} mx-1">${shortAmbLabel(key[0])}</span>`;
+            })
+            }
+          /* ── Render sentence table ──────────────────────── */
+          function renderSentenceTable() {
+            const tbody = document.getElementById("sentenceTableBody");
+            const ambTypes = ["SemanticAmbiguity", "ScopeAmbiguity", "ActorAmbiguity", "ProcessExecutionAmbiguity"];
+            const indices = Object.keys(detailed.Raw_requirement);
+            let ambiguousSentences = 0;
+            tbody.innerHTML = indices
+              .map((i) => {
+                const sentence = detailed.Raw_requirement[i];
+                const reqType = detailed.requirement_type[i];
+                const confidence = detailed.confidance_scores[i];
+                const hasAmb = detailed.HasAmbiguity[i] === 1;
+                const pct = Math.round(confidence * 100);
+                const fillClass = confidenceFillClass(confidence);
+
+                // Build ambiguity flags-
+                const flags = ambTypes
+                  .filter((t) => detailed[t] && detailed[t][i] === 1)
+                  .map((t) => `<span class="amb-flag ${AMB_FLAG_CLASS[t]}">${shortAmbLabel(t)}</span>`)
+                  .join("");
+
+                const flagsHtml = flags ? `<div class="amb-flags">${flags}</div>` : `<span class="amb-flag flag-none">Clear</span>`;
+                if (flags) ambiguousSentences++;
+                const statusDot = flags
+                  ? `<div class="amb-status-dot dot-ambiguous" title="Ambiguous"></div>`
+                  : `<div class="amb-status-dot dot-clear" title="Clear"></div>`;
+
+                return `
+                <tr>
+                  <td class = "clarification-index" style="font-weight:100; font-size:11px; align-items:center">${parseInt(i) + 1}</td>
+                  <td><div class="req-sentence-text">${sentence}</div></td>
+                  <td><span class="req-type-tag ${TYPE_TAG_CLASS[reqType] || "tag-nonfunctional"}">${reqType}</span></td>
+                  <td>
+                    <div class="confidence-bar-wrap">
+                      <div class="confidence-bar-track">
+                        <div class="confidence-bar-fill ${fillClass}" style="width:${pct}%"></div>
+                      </div>
+                      <span class="confidence-value">${pct}%</span>
+                    </div>
+                  </td>
+                  <td>${flagsHtml}</td>
+                  <td style="text-align:center;">${statusDot}</td>
+                </tr>`;
+              })
+              .join("");
+            document.getElementById("detected_sentances").innerText = ambiguousSentences;
+            let totalSent = Object.keys(PAYLOAD.session.reply.DETAILED_PREDICTIONS.Raw_requirement).length
+            document.getElementById("ambiguouspct").innerText = `${ambiguousSentences/totalSent*100}%`;
+
+          }
+
+          /* ── Render ambiguity description ───────────────── */
+          function renderDescription() {
+            document.getElementById("ambiguityDescription").textContent = reply.DESCRIPTION;
+          }
+
+          // HelperFor animate renderAmbiguiy
+          function animer(index, currambpct) {
+              const circle = document.getElementById(`circlethumb-${index}`);
+              const text = document.getElementById(`circleText-${index}`);
+
+              if (!circle || !text) return;
+
+              const duration = 500;
+              const stepTime = 10;
+              let ambpct = 0;
+              const totalSteps = duration / stepTime;
+              const increment = currambpct / totalSteps;
+
+              const counterInterval = setInterval(() => {
+                ambpct += increment;
+
+                if (ambpct >= currambpct) {
+                  ambpct = currambpct;
+                  clearInterval(counterInterval);
+                }
+
+                const strokeOffset = 220 - (ambpct * 2.2);
+                circle.style.strokeDashoffset = `${strokeOffset}px`;
+                text.textContent = `${Math.round(ambpct)}%`;
+              }, stepTime);
+            }
+          // HelperFor animate renderAmbiguiy
+
+          /* ── Render ambiguity type list ─────────────────── */
+          function renderAmbiguityTypeList() {
+            const container = document.getElementById("ambiguityTypeList");
+            const detectedTypes = reply.DETECTED_AMBIGUITES || [];
+
+            // Calculate total ambiguities across all types (with division-by-zero check)
+            let totalAmbi = 0;
+            detectedTypes.forEach((ambType) => {
+              totalAmbi += Object.values(detailed[ambType] || {}).filter((v) => v === 1).length;
+            });
+
+            // Array to store target percentages for animation after DOM insertion
+            const animationTargets = [];
+
+            // 1. Generate HTML string with unique element IDs
+            container.innerHTML = detectedTypes
+              .map((ambType, idx) => {
+                const count = Object.values(detailed[ambType] || {}).filter((v) => v === 1).length;
+                const currambpct = totalAmbi > 0 ? Math.round((count / totalAmbi) * 100) : 0;
+
+                // Store target data for post-render animation
+                animationTargets.push({ index: idx, pct: currambpct });
+
+                const affected = Object.entries(detailed[ambType] || {})
+                  .filter(([, v]) => v === 1)
+                  .map(([i]) => `Sentence ${parseInt(i) + 1}`)
+                  .join(", ");
+
+                return `
+                <div class="ambiguity-type-row">
+                  <div class="ambiguity-type-icon-box ${AMB_ICON_CLASS[ambType]}">
+                    ${AMB_ICON[ambType] || "❓"}
+                  </div>
+                  <div class="ambiguity-type-info">
+                    <div class="ambiguity-type-name">${AMB_TYPE_LABEL[ambType] || ambType}</div>
+                    <div class="ambiguity-type-sentences">${affected || "None"}</div>
+                  </div>
+                  <div class="ambiguity-type-count">${count}</div>
+                  <div class="ambiguity-type-circle">
+                    <svg width="60" height="60" viewBox="-11.25 -11.25 112.5 112.5" version="1.1" xmlns="http://www.w3.org/2000/svg" style="transform:rotate(-90deg)">
+                      <circle r="35" cx="45" cy="45" fill="transparent" stroke="#e3ece830" stroke-width="5"></circle>
+                      <circle id="circlethumb-${idx}" class="circlethumb" r="35" cx="45" cy="45" stroke="#76e597" stroke-width="5" stroke-linecap="round" stroke-dashoffset="220px" fill="transparent" stroke-dasharray="219.8px"></circle>
+                      <text id="circleText-${idx}" x="28" y="50" fill="#6bdba7" font-size="18px" font-weight="bold" style="transform:rotate(90deg) translate(0px, -86px)">0%</text>
+                    </svg>
+                  </div>
+                </div>`;
+              })
+              .join("");
+
+            // 2. NOW trigger animations after HTML is mounted in the DOM
+            animationTargets.forEach(({ index, pct }) => {
+              animer(index, pct);
+            });
+            }
+            // stroke-dashoffset="220px" 0%
+            // stroke-dashoffset="0px" 100%
+            /* ── Render clarifications ──────────────────────── */
+            function renderClarifications() {
+              const container = document.getElementById("clarificationList");
+
+              // Distribute questions to ambiguity types
+              const detectedAmbs = reply.DETECTED_AMBIGUITES;
+              const qPerType = Math.floor(questions.length / detectedAmbs.length);
+              let html = "";
+              let globalIdx = 0;
+      //----------------------------------PLAN B----------------------------------------------------------------------?
+              let clarification = 0;
+              for (let id = 0; id < questions.length; id++) {
+                let answer = answers[id] || null;
+                let isAnswered = (answer != null)
+                let tagClass = AMB_TYPE_TAG_CLASS[PAYLOAD.ambiguities[id]];
+                html += `
+                  <div class="clarification-row">
+                    <div class="clarification-index">${id + 1}</div>
+                    <div class="clarification-content">
+                      <span class="clarification-type-tag ${tagClass}">${shortAmbLabel(PAYLOAD.ambiguities[id])}</span>
+                      <div class="clarification-question">${questions[id]}</div>
+                      <div class="clarification-answer ${isAnswered ? "" : "answer-pending"}">
+                        ${isAnswered ? answer : "Awaiting client response…"}
+                      </div>
+                    </div>
+                    <div class="clarification-answered-badge">
+                      ${isAnswered ? '<span class="answered-yes">✓ Done</span>' : '<span class="answered-no">Pending</span>'}
+                    </div>
+                  </div>`;
+                if (isAnswered) {
+                  clarification+=1
+                }
+                document.getElementById("answerdQuestions").innerText = `${clarification}/${Object.keys(PAYLOAD.questions).length}`
+              }
+      //----------------------------------PLAN B----------------------------------------------------------------------?
+
+
+      //----------------------------------PLAN A----------------------------------------------------------------------?
+              // detectedAmbs.forEach((ambType, ti) => {
+              //   const start = ti * qPerType;
+              //   const end = ti === detectedAmbs.length - 1 ? questions.length : start + qPerType;
+              //   const typeQs = questions.slice(start, end);
+
+              //   typeQs.forEach((q, qi) => {
+              //     const answer = answers[globalIdx] || null;
+              //     const isAnswered = answer && !answer.startsWith("ANSWER");
+              //     const tagClass = AMB_TYPE_TAG_CLASS[ambType] || "flag-none";
+
+              //     html += `
+              //       <div class="clarification-row">
+              //         <div class="clarification-index">${globalIdx + 1}</div>
+              //         <div class="clarification-content">
+              //           <span class="clarification-type-tag ${tagClass}">${shortAmbLabel(ambType)}</span>
+              //           <div class="clarification-question">${q}</div>
+              //           <div class="clarification-answer ${isAnswered ? "" : "answer-pending"}">
+              //             ${isAnswered ? answer : "Awaiting client response…"}
+              //           </div>
+              //         </div>
+              //         <div class="clarification-answered-badge">
+              //           ${isAnswered ? '<span class="answered-yes">✓ Done</span>' : '<span class="answered-no">Pending</span>'}
+              //         </div>
+              //       </div>`;
+              //     globalIdx++;
+              //   });
+              // });
+      //----------------------------------PLAN A----------------------------------------------------------------------?
+
+              container.innerHTML = html;
+            }
+
+            /* ── Render requirement type chart ──────────────── */
+            /* ── Render requirement type chart ──────────────── */
+            function renderReqTypeChart() {
+              const typeCounts = {};
+              Object.values(detailed.requirement_type).forEach((t) => {
+                typeCounts[t] = (typeCounts[t] || 0) + 1;
+              });
+
+              const COLORS = {
+                Security:    "#9354ff9a",
+                Usability:   "#75d6ffa2",
+                Functional:  "#ff995090",
+                Performance: "#f2ff69be",
+                Operational: "#83fff1b2",
+              };
+
+              const canvas = document.getElementById("reqTypeChart");
+
+              // Destroy previous chart instance if it exists
+              if (reqChartInstance) {
+                reqChartInstance.destroy();
+              }
+
+              reqChartInstance = new Chart(canvas, {
+                type: "doughnut",
+                data: {
+                  labels: Object.keys(typeCounts),
+                  datasets: [
+                    {
+                      data: Object.values(typeCounts),
+                      backgroundColor: Object.keys(typeCounts).map((k) => COLORS[k] || "#f59e0b"),
+                      borderWidth: 2,
+                      borderColor: "#0000",
+                      // borderRadius : 7,
+                      weight:3,
+                    },
+                  ],
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: "right",
+                      labels: { font: { size: 11},color:"#e3ece8" , padding: 14, usePointStyle: true },
+                    },
+                    tooltip: {
+                      callbacks: {
+                        label: (ctx) => ` ${ctx.label}: ${ctx.raw} sentence${ctx.raw > 1 ? "s" : ""}`,
+                      },
+                    },
+                  },
+                  cutout: "62%",
+                },
+              });
+            }
+
+            /* ── Boot ───────────────────────────────────────── */
+            /* ── Boot ───────────────────────────────────────── */
+            document.addEventListener("DOMContentLoaded", () => {
+              updateUI();
+            });
+    </script>
+  </body>
+</html>

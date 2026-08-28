@@ -10,7 +10,7 @@
 :root {
   --ink: #161a1d;
   --paper: #f6f4ef;
-  --line: #d8d3c6;
+  --line: #d8c6cd;
   --accent: #3a6b5c; /* muted signal green — "system understood" */
   --accent-soft: #e3ece8;
   --warn: #b0703a; /* queued / low confidence */
@@ -36,8 +36,16 @@
   --aire-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
   --mono: "SF Mono", "JetBrains Mono", "Courier New", monospace;
   --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --Security: #9354ff9a;
+  --Usability: #75d6ffa2;
+  --Functional: #ff995090;
+  --Performance: #f2ff69be;
+  --Operational: #83fff1b2;
 }
-
+.circlethumb {
+  /* stroke-dashoffset: 100px; */
+  transition: all 0.5s ease;
+}
 /* ── Base reset (minimal) ──────────────────────────────────────────────── */
 *,
 *::before,
@@ -52,7 +60,6 @@ body {
   background-color: var(--aire-bg) !important;
   font-family: var(--sans);
   color: var(--ink);
-  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -449,19 +456,6 @@ body {
 
 * {
   box-sizing: border-box;
-}
-
-.console {
-  /* background: var(--aire-bg); */
-  background-image: radial-gradient(#0c2d56, #092240, #08121c, #040a0f, #000);
-  background-position-y: -50vh;
-  height: 100vh;
-  width: 100vw;
-  border-radius: 4px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
 }
 
 /* ---------- Header ---------- */
