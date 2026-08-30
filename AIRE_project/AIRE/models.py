@@ -19,13 +19,15 @@ class Session(db.Model):
     domain = db.Column(db.String(50),  nullable=True)                 # E-commerce, Finance, etc.
     ambiguity_count = db.Column(db.Integer,     nullable=False, default=0)     # total ambiguous sentences
     raw_paragraph = db.Column(db.Text,        nullable=True)                 # original client paragraph
-    submitted_at = db.Column(db.DateTime,    default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime,    default=datetime.utcnow, onupdate=datetime.utcnow)
+    submitted_at = db.Column(db.DateTime,    default=datetime.now())
+    updated_at = db.Column(db.DateTime,    default=datetime.now(), onupdate=datetime.now())
 
     # Relationships
     sentences = db.relationship('Sentence',        backref='session', lazy=True, cascade='all, delete-orphan')
     ambiguities = db.relationship('AmbiguityResult', backref='session', lazy=True, cascade='all, delete-orphan')
     clarifications = db.relationship('Clarification',   backref='session', lazy=True, cascade='all, delete-orphan')
+    Company = db.relationship('Company',   backref='session', lazy=True, cascade='all, delete-orphan')
+    user = db.relationship('User',   backref='session', lazy=True, cascade='all, delete-orphan')
 
     def to_dict(self):
         return {
@@ -53,7 +55,7 @@ class Sentence(db.Model):
     requirement_type = db.Column(db.String(30), nullable=True)              # Functional, Security, etc.
     confidence_score = db.Column(db.Float,    nullable=True)                # BA Brain confidence
     has_ambiguity = db.Column(db.Boolean,  nullable=False, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now())
 
     def to_dict(self):
         return {
@@ -81,7 +83,7 @@ class AmbiguityResult(db.Model):
     # SemanticAmbiguity | ScopeAmbiguity | ActorAmbiguity | etc.
     ambiguity_type = db.Column(db.String(40), nullable=False)
     detected = db.Column(db.Boolean,  nullable=False, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now())
 
     # Relationship back to sentence
     sentence = db.relationship('Sentence', backref='ambiguity_results', lazy=True)
@@ -110,7 +112,7 @@ class Clarification(db.Model):
     question = db.Column(db.Text,     nullable=False)     # the question asked to the client
     answer = db.Column(db.Text,     nullable=True)      # client's answer (nullable — may be skipped)
     answered = db.Column(db.Boolean,  nullable=False, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now())
     answered_at = db.Column(db.DateTime, nullable=True)
 
     def to_dict(self):
@@ -127,6 +129,46 @@ class Clarification(db.Model):
     def __repr__(self):
         return f'<Clarification type={self.ambiguity_type} answered={self.answered}>'
 
+# -- Clients Information -------------------------------------------------------
+
+
+class Company(db.Model):
+    __tablename__ = 'companies'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    session_id = db.Column(db.String(16),  db.ForeignKey('sessions.token'), nullable=False)
+    company_name = db.Column(db.String(255), nullable=False)
+    industry = db.Column(db.String(100), nullable=True)
+    company_size = db.Column(db.String(50), nullable=True)
+    website_url = db.Column(db.String(255), nullable=True)
+    billing_email = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.now())
+
+    # Relationship to User table
+    users = db.relationship('User', backref='company', lazy=True)
+
+    def __repr__(self):
+        return f'<Company {self.company_name}>'
+
+
+class User(db.Model):
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    session_id = db.Column(db.String(16),  db.ForeignKey('sessions.token'), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True)
+    name = db.Column(db.String(100), nullable=False)
+    phone_number = db.Column(db.String(50), nullable=False)
+    job_title = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(255), unique=True, nullable=True)
+    password_hash = db.Column(db.String(255), nullable=True)
+    last_login_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.now())
+
+    def __repr__(self):
+        return f'<User {self.name}>'
+# -- Clients Information -------------------------------------------------------
+
 
 # ── Helper: Save full payload to DB ───────────────────────────────────────────
 def save_session_payload(payload: dict) -> Session:
@@ -139,11 +181,14 @@ def save_session_payload(payload: dict) -> Session:
         db.session.add(session_record)
         db.session.commit()
     """
+
     session_data = payload.get('session', {})
     reply = session_data.get('reply', {})
     questions = payload.get('questions', [])
     amb_type_of_qn = payload.get('ambiguities', [])
     answers = payload.get('answers', [])
+    personalized_answers = payload.get('personalizedAnswers', [])
+    duplicated_signal = payload.get('duplicate', {})
 
     # Parse DETAILED_PREDICTIONS JSON string
     detailed = {}
@@ -164,7 +209,52 @@ def save_session_payload(payload: dict) -> Session:
         ) if detailed else None,
     )
     db.session.add(session_record)
-    db.session.flush()  # get session_record.id before committing
+    db.session.flush()  # get session_record.token before committing
+
+    # ── 2.5 Create Personalized records ─────────────────────────────────────────────
+    # {Only the partial data were stored here rest of the data input operation hadled by form.py}
+    # personalized_answers = [name,phone,company,job]
+    # Extract the company dict safely
+    company_info = duplicated_signal.get("company") if isinstance(duplicated_signal.get("company"), dict) else {}
+
+    # Safely extract company_name whether it is a list ['ABC Ltd'] or a string 'ABC Ltd'
+    raw_company_name = company_info.get("company_name")
+    if isinstance(raw_company_name, list):
+        company_name = raw_company_name[0] if len(raw_company_name) > 0 else None
+    else:
+        company_name = raw_company_name
+
+    # Check if we should create a new record or query an existing one
+    if not company_name:
+        company_recode = Company(
+            session_id=session_record.token,
+            company_name=personalized_answers[2]
+        )
+        db.session.add(company_recode)
+    else:
+        company_recode = db.session.query(Company).filter(
+            Company.company_name == company_name
+        ).first()
+
+        # If the company didn't actually exist in DB, create it as fallback
+        if not company_recode:
+            company_recode = Company(
+                session_id=session_record.token,
+                company_name=company_name
+            )
+            db.session.add(company_recode)
+
+    db.session.flush()
+
+    user_recode = User(
+        session_id=session_record.token,
+        company_id=company_recode.id,
+        name=personalized_answers[0],
+        phone_number=personalized_answers[1],
+        job_title=personalized_answers[3]
+    )
+    db.session.add(user_recode)
+    # ── 2.5 Create Personalized records ─────────────────────────────────────────────
 
     # ── 2. Create Sentence records ─────────────────────────────────────────────
     ambiguity_types = [
@@ -219,7 +309,7 @@ def save_session_payload(payload: dict) -> Session:
             question=questions[i],
             answer=answer_val if is_answered else None,
             answered=is_answered,
-            answered_at=datetime.utcnow() if is_answered else None,
+            answered_at=datetime.now() if is_answered else None,
         )
         db.session.add(clarification)
     return session_record

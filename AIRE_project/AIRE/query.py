@@ -1,5 +1,5 @@
-from AIRE import app
-from AIRE.models import AmbiguityResult, Clarification, Sentence, Session
+from AIRE import app, db
+from AIRE.models import AmbiguityResult, Clarification, Sentence, Session, Company, User
 import json
 
 with app.app_context():
@@ -169,3 +169,175 @@ with app.app_context():
         }
 
         return payload
+
+    def reconstruct_company_payload(company_id: int) -> dict:
+        """Build an aggregated dashboard payload for one company."""
+        company = Company.query.filter_by(id=company_id).first_or_404()
+        session_tokens = {
+            company.session_id,
+            *(
+                session_id
+                for (session_id,) in db.session.query(User.session_id)
+                .filter(User.company_id == company.id)
+                .distinct()
+                .all()
+            ),
+        }
+        sessions = (
+            Session.query.filter(Session.token.in_(session_tokens))
+            .order_by(Session.submitted_at.desc())
+            .all()
+        )
+
+        ambiguity_order = [
+            "ActorAmbiguity",
+            "ScopeAmbiguity",
+            "SemanticAmbiguity",
+            "ProcessExecutionAmbiguity",
+        ]
+        ambiguity_types = [
+            "SemanticAmbiguity",
+            "ScopeAmbiguity",
+            "ActorAmbiguity",
+            "ProcessExecutionAmbiguity",
+        ]
+        detailed = {
+            "Raw_requirement": {},
+            "HasAmbiguity": {},
+            "Domain": {},
+            "requirement_type": {},
+            "confidance_scores": {},
+            "SessionToken": {},
+            **{amb_type: {} for amb_type in ambiguity_types},
+        }
+        questions, answers, ambiguities = [], [], []
+        grouped = {}
+        detected_types = set()
+        total_ambiguities = 0
+        session_summaries = []
+        aggregate_index = 0
+
+        for session_row in sessions:
+            sentences = Sentence.query.filter_by(session_id=session_row.token).order_by(
+                Sentence.sentence_index
+            ).all()
+            ambiguity_rows = AmbiguityResult.query.filter_by(session_id=session_row.token).all()
+            ambiguity_by_sentence = {}
+            for row in ambiguity_rows:
+                ambiguity_by_sentence.setdefault(row.sentence_id, set()).add(row.ambiguity_type)
+                if row.detected:
+                    detected_types.add(row.ambiguity_type)
+                    total_ambiguities += 1
+
+            session_ambiguous = sum(1 for sentence in sentences if sentence.has_ambiguity)
+            session_summaries.append({
+                "token": session_row.token,
+                "domain": session_row.domain,
+                "status": session_row.status,
+                "sentence_count": len(sentences),
+                "ambiguity_count": session_ambiguous,
+            })
+
+            for sentence in sentences:
+                idx = str(aggregate_index)
+                sentence_ambiguities = ambiguity_by_sentence.get(sentence.id, set())
+                detailed["Raw_requirement"][idx] = sentence.raw_text
+                detailed["HasAmbiguity"][idx] = int(sentence.has_ambiguity)
+                detailed["Domain"][idx] = session_row.domain
+                detailed["requirement_type"][idx] = sentence.requirement_type or ""
+                detailed["confidance_scores"][idx] = sentence.confidence_score or 0.0
+                detailed["SessionToken"][idx] = session_row.token
+                for amb_type in ambiguity_types:
+                    detected = amb_type in sentence_ambiguities
+                    detailed[amb_type][idx] = int(detected)
+                    if detected:
+                        grouped.setdefault(amb_type, []).append(sentence.raw_text)
+                aggregate_index += 1
+
+            clarifications = Clarification.query.filter_by(session_id=session_row.token).order_by(
+                Clarification.id
+            ).all()
+            for clarification in clarifications:
+                questions.append(clarification.question)
+                answers.append(clarification.answer)
+                ambiguities.append(clarification.ambiguity_type)
+
+        detected_ambiguities = [amb_type for amb_type in ambiguity_order if amb_type in detected_types]
+        domains = list(dict.fromkeys(summary["domain"] for summary in session_summaries if summary["domain"]))
+        status = "resolved" if sessions and all(
+            item["status"] == "resolved" for item in session_summaries) else "clarify"
+
+        return {
+            "company": {
+                "id": company.id,
+                "company_name": company.company_name,
+                "industry": company.industry,
+                "company_size": company.company_size,
+                "website_url": company.website_url,
+                "billing_email": company.billing_email,
+            },
+            "sessions": session_summaries,
+            "questions": questions,
+            "answers": answers,
+            "ambiguities": ambiguities,
+            "session": {
+                "token": str(company.id),
+                "status": status,
+                "ambiguous": sum(item["ambiguity_count"] for item in session_summaries),
+                "reply": {
+                    "DOMAIN": ", ".join(domains) or "Not detected",
+                    "DETECTED_AMBIGUITES": detected_ambiguities,
+                    "DESCRIPTION": f"{total_ambiguities} ambiguity results across {len(sessions)} session(s).",
+                    "GROUPED_BY_AMBIGUITY": {key: " ".join(value) for key, value in grouped.items()},
+                    "DETAILED_PREDICTIONS": detailed,
+                },
+            },
+        }
+
+    def company_query(**company):
+        token = (company.get("token") or "").strip()
+        name = (company.get("name") or "").strip()
+
+        # Prioritize searching by name when user is typing in the company input
+        if name:
+            companies = db.session.query(Company).filter(Company.company_name.ilike(f'%{name}%')).all()
+        elif token:
+            companies = db.session.query(Company).filter(Company.session_id == token).all()
+        else:
+            return {}
+
+        if not companies:
+            return {}
+
+        return {
+            "company_name": [c.company_name for c in companies],
+            "industry": [c.industry for c in companies],
+            "company_size": [c.company_size for c in companies],
+            "website_url": [c.website_url for c in companies],
+            "billing_email": [c.billing_email for c in companies],
+        }
+
+    def user_query(**user):
+        token = (user.get("token") or "").strip()
+        phone = (user.get("phone") or "").strip()
+
+        # Prioritize searching by phone when user is typing in the phone input
+        if phone:
+            user_record = db.session.query(User).filter(User.phone_number.ilike(f'%{phone}%')).all()
+        elif token:
+            user_record = db.session.query(User).filter(User.session_id == token).all()
+        else:
+            return {}
+
+        if not user_record:
+            return {}
+
+        return {
+            "id": [u.id for u in user_record],
+            "session_id": [u.session_id for u in user_record],
+            "company_id": [u.company_id for u in user_record],
+            "name": [u.name for u in user_record],
+            "phone_number": [u.phone_number for u in user_record],
+            "job_title": [u.job_title for u in user_record],
+            "email": [u.email for u in user_record],
+        }

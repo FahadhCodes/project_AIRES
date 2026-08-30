@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>From</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css"
+      integrity="sha512-QeR2VH+lsBE5LSAe1Q5EnTBbe7XTBubt8dG93Y7gidSgdMCr8nVqKcfKAMyN96SV8KDbZVTDXChatu5G2KQGzg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <style>
+      body {
+        font-family:
+          "Segoe UI",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        /* background: var(--dash-bg); */
+        background-image: radial-gradient(hsl(213, 76%, 20%), hsl(213, 75%, 10%), hsl(210, 56%, 5%), hsl(207, 58%, 2%), hsl(0, 0%, 0%));
+        color: var(--aire-text);
+        font-size: 13px;
+        line-height: 1.6;
+        /* display: flex; */
+        min-height: 100vh;
+        /* display: block; */
+      }
+      select#company_size {
+        background-color: #092240;
+      }
+      .ambiguity-card {
+        background: #09224000;
+      }
+      #personalizedQuestions {
+        grid-template-columns: 1fr;
+        border-radius: 10px;
+        background: #09224086;
+        border: 1px solid var(--accent);
+        height: 70vh;
+        width: 90vw;
+      }
+      .ambiguity-section-title {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <form method="POST" action="{{ url_for('form') }}" id="form_{{ form.session_id }}" class="regForm">
+      {{ form.hidden_tag() }}
+
+      <!-- <div class="ambiguity-card"> -->
+      <div class="ambiguity-card-body container-fluid" id="personalizedQuestions">
+        <div class="ambiguity-section-title text-center fs-5">Regitration Form</div>
+        <!-- Row 1: Name & Phone Number -->
+        <div class="row">
+          <!-- 1. Name -->
+          <div class="question-content">
+            {{ form.name.label(class="question-text qn-1", id="name") }}
+            <div class="answer-field-wrap d-flex">{{ form.name(class="answer-field name qn-1", placeholder="John Doe") }}</div>
+            {% if form.name.errors %}
+            <div class="text-danger small mt-1">{% for error in form.name.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
+          </div>
+
+          <!-- 2. Phone Number -->
+          <div class="question-content">
+            {{ form.phone_number.label(class="question-text qn-2", id="phone") }}
+            <div class="answer-field-wrap d-flex">{{ form.phone_number(class="answer-field phone_number qn-2", placeholder="+94XXXXXXXXX") }}</div>
+            {% if form.phone_number.errors %}
+            <div class="text-danger small mt-1">{% for error in form.phone_number.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Row 2: Personal Email & Job Title -->
+        <div class="row">
+          <!-- 3. Personal Email -->
+          <div class="question-content">
+            {{ form.email.label(class="question-text qn-3", id="email") }}
+            <div class="answer-field-wrap d-flex">{{ form.email(class="answer-field email qn-3", placeholder="john@example.com") }}</div>
+            {% if form.email.errors %}
+            <div class="text-danger small mt-1">{% for error in form.email.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
+          </div>
+
+          <!-- 4. Job Title -->
+
+          <div class="question-content">
+            {{ form.job_title.label(class="question-text qn-4", id="job") }}
+            <div class="answer-field-wrap d-flex">
+              {{ form.job_title(class="answer-field job_title qn-4", placeholder="Ex: Employee (Business Analyst)") }}
+            </div>
+            {% if form.job_title.errors %}
+            <div class="text-danger small mt-1">{% for error in form.job_title.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Row 3: Company Name & Industry -->
+        <div class="row">
+          <!-- 5. Company Name -->
+          <div class="question-content">
+            {{ form.company_name.label(class="question-text qn-5", id="company") }}
+            <div class="answer-field-wrap d-flex">
+              {{ form.company_name(class="answer-field company_name qn-5", placeholder="Ex: ABC (Pvt) Ltd") }}
+            </div>
+            {% if form.company_name.errors %}
+            <div class="text-danger small mt-1">{% for error in form.company_name.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
+          </div>
+
+          <!-- 6. Industry -->
+
+          <div class="question-content">
+            {{ form.industry.label(class="question-text qn-6", id="industry") }}
+            <div class="answer-field-wrap d-flex">{{ form.industry(class="answer-field industry qn-6", placeholder="Ex: Software / Finance") }}</div>
+            {% if form.industry.errors %}
+            <div class="text-danger small mt-1">{% for error in form.industry.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Row 4: Company Size & Website URL -->
+        <div class="row">
+          <!-- 7. Company Size -->
+          <div class="question-content">
+            {{ form.company_size.label(class="question-text qn-7", id="company_size") }}
+            <div class="answer-field-wrap d-flex">{{ form.company_size(class="answer-field company_size qn-7") }}</div>
+            {% if form.company_size.errors %}
+            <div class="text-danger small mt-1">{% for error in form.company_size.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
+          </div>
+          <!-- 9. Company Email -->
+          <div class="question-content">
+            {{ form.billing_email.label(class="question-text qn-9", id="billing_email") }}
+            <div class="answer-field-wrap d-flex">
+              {{ form.billing_email(class="answer-field billing_email qn-9", placeholder="billing@example.com") }}
+            </div>
+            {% if form.billing_email.errors %}
+            <div class="text-danger small mt-1">{% for error in form.billing_email.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Row 5: Company Billing Email -->
+        <div class="row">
+          <!-- 8. Website URL -->
+
+          <div class="question-content">
+            {{ form.website_url.label(class="question-text qn-8", id="website_url") }}
+            <div class="answer-field-wrap d-flex">
+              {{ form.website_url(class="answer-field website_url qn-8", placeholder="https://example.com") }}
+            </div>
+            {% if form.website_url.errors %}
+            <div class="text-danger small mt-1">{% for error in form.website_url.errors %}<span>{{ error }}</span>{% endfor %}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div id="heyWaitsec" class="mt-2"></div>
+        <div class="submit-all-row">{{form.submit(class = "btn-aire-primary")}}</div>
+      </div>
+      <!-- </div> -->
+
+      <!-- Action Buttons -->
+    </form>
+  </body>
+</html>

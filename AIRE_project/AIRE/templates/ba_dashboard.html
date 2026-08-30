@@ -956,7 +956,7 @@
           {%endfor%}
           <!-- <a class="sidebar-nav-item nav-active" href="#">#F7B66843</a> -->
         </div>
-        <div class="sidebar-nav-label">Workspace</div>
+        <!-- <div class="sidebar-nav-label">Workspace</div>
         <a class="sidebar-nav-item nav-active" href="#"> <span class="sidebar-nav-icon">📊</span> Dashboard </a>
         <a class="sidebar-nav-item" href="#">
           <span class="sidebar-nav-icon">📋</span> Requirements
@@ -971,7 +971,7 @@
         <div class="sidebar-nav-label" style="margin-top: 8px">Analysis</div>
         <a class="sidebar-nav-item" href="#"> <span class="sidebar-nav-icon">📝</span> User Stories </a>
         <a class="sidebar-nav-item" href="#"> <span class="sidebar-nav-icon">🗺️</span> Use Case Diagram </a>
-        <a class="sidebar-nav-item" href="#"> <span class="sidebar-nav-icon">📈</span> Reports </a>
+        <a class="sidebar-nav-item" href="#"> <span class="sidebar-nav-icon">📈</span> Reports </a> -->
       </nav>
 
       <div class="sidebar-bottom">
@@ -995,7 +995,7 @@
           <h1>Requirement Analysis</h1>
           <p id="topbarMeta">
             <span class="badge bg-success tokenReplacer"></span>
-            <span>Submitted just now</span>
+            <!-- <span>Submitted just now</span> -->
           </p>
         </div>
         <div class="topbar-right">
@@ -1003,8 +1003,9 @@
             <div class="live-dot"></div>
             Live
           </div>
-          <button class="topbar-btn topbar-btn-ghost">↓ Export</button>
-          <button class="topbar-btn topbar-btn-primary">✓ Mark Resolved</button>
+          <a class="topbar-btn topbar-btn-ghost" href="{{ url_for('company_dashboard_page') }}">Company View</a>
+          <!-- <button class="topbar-btn topbar-btn-ghost">↓ Export</button>
+          <button class="topbar-btn topbar-btn-primary">✓ Mark Resolved</button> -->
         </div>
       </div>
 

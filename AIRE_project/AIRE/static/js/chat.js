@@ -30,7 +30,7 @@ function addThinkingBubble() {
   msg.className = "msg msg--bot";
   msg.id = "thinkingBubble";
   msg.innerHTML = `
-        <div class="msg-label">AIRE</div>
+        <div class="msg-label">AIRES</div>
         <div class="bubble thinking"><span></span><span></span><span></span></div>
     `;
   thread.appendChild(msg);
@@ -50,10 +50,10 @@ function questions(ambiguity, token) {
     <div class="question-item">
       <div class="question-number">${parseInt(key) + 1}</div>
       <div class="question-content">
-        <div class="question-text qn-${parseInt(key) + 1}" id = "${ambiguity}">${val}</div>
+        <div class="question-text reqCategory qn-${parseInt(key) + 1}" id = "${ambiguity}">${val}</div>
         <div class="answer-field-wrap d-flex">
           <textarea
-            class="answer-field token-${token} qn-${parseInt(key) + 1}"
+            class="answer-field reqCategory token-${token} qn-${parseInt(key) + 1}"
             name = "${ambiguity}_${parseInt(key) + 1}"
             rows="1"
             placeholder="e.g. Search by category, price filter, and wishlist..."
@@ -84,7 +84,7 @@ function addBotMessage(data, statusClass, metaText) {
 
   if (data.label == "greeting") {
     msg.innerHTML = `
-      <div class="msg-label">AIRE</div>
+      <div class="msg-label">AIRES</div>
       <div class="bubble">${data.reply}</div>
       ${metaText ? `<div class="meta-tag">${metaText}</div>` : ""}
     `;
@@ -109,7 +109,7 @@ function addBotMessage(data, statusClass, metaText) {
 
     // Notice token-specific IDs for progress fill & label
     msg.innerHTML = `
-      <div class="msg-label">AIRE</div>
+      <div class="msg-label">AIRES</div>
       <div class="bubble msg-row">
         <div class="badge-row">
           <span class="aire-badge badge-domain">${data.reply.DOMAIN}</span>
@@ -128,9 +128,67 @@ function addBotMessage(data, statusClass, metaText) {
           <div class="ambiguity-section">
             <div class="ambiguity-section-title">Clarification Required</div>
             ${str}
+            <div class="ambiguity-section-title">Fill this section to get in touch</div>
+            <div class="ambiguity-alert" id="heyWaitsec"></div>
+            <div class = "ambiguity-card">
+              <div class = "ambiguity-card-body" id = "personalizedQuestions">
+                <div class="question-item">
+                  <div class="question-number">1</div>
+                  <div class="question-content">
+                    <div class="question-text qn-1" id = "name">Name</div>   
+                    <div class="answer-field-wrap d-flex">
+                      <input
+                        class="answer-field token-${currentToken} qn-1"
+                        name = "name"
+                        placeholder="John Doe"
+                      ></input>
+                    </div>
+                  </div>
+                </div>
+                <div class="question-item">
+                  <div class="question-number">2</div>
+                  <div class="question-content">
+                    <div class="question-text qn-2" id = "phone">Phone Number</div>
+                    <div class="answer-field-wrap d-flex">
+                      <input
+                        class="bot answer-field token-${currentToken} qn-2"
+                        name = "phone"
+                        placeholder="+94XXXXXXXXX"
+                      ></input>
+                    </div>
+                  </div>
+                </div>
+                <div class="question-item">
+                  <div class="question-number">3</div>
+                  <div class="question-content">
+                    <div class="question-text qn-3" id = "company">Your Company</div>
+                    <div class="answer-field-wrap d-flex">
+                      <input
+                        class="bot answer-field token-${currentToken} qn-3"
+                        name = "company"
+                        placeholder="Ex: ABC (Pvt) Ltd"
+                      ></input>
+                    </div>
+                  </div>
+                </div>
+                <div class="question-item">
+                  <div class="question-number">4</div>
+                  <div class="question-content">
+                    <div class="question-text qn-4" id = "job">Job title</div>
+                    <div class="answer-field-wrap d-flex">
+                      <input
+                        class="answer-field token-${currentToken} qn-4"
+                        name = "job"
+                        placeholder="Ex: Employee (Business Analyst)"
+                      ></input>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="submit-all-row">
-            <button class="btn-aire-ghost" onclick="skipAll('${currentToken}')">Skip for now</button>
+            <a id="redirectToform" href="" class="btn-aire-primary" onclick="formSubmission('${currentToken}')">Submit a Form</a>
             <button class="btn-aire-primary" onclick="submitAll('${currentToken}')">✓ Submit Clarifications</button>
           </div>
         </div>
@@ -141,22 +199,152 @@ function addBotMessage(data, statusClass, metaText) {
 
   document.getElementById("thread").appendChild(msg);
   scrollToBottom();
+  heywaitAsec(currentToken);
+}
+
+let duplicatedData = { company: "", user: "" };
+
+function heywaitAsec(duplicatedToken) {
+  const personalizedQuestions = document.getElementById("personalizedQuestions");
+  if (!personalizedQuestions) return;
+
+  // 1. Target inputs reliably using the HTML classes (.qn-3 for Company, .qn-2 for Phone)
+  const companyInput = personalizedQuestions.querySelector("input.qn-3");
+  const phoneInput = personalizedQuestions.querySelector("input.qn-2");
+  const suggestMessage = document.getElementById("heyWaitsec");
+
+  if (!companyInput || !phoneInput || !suggestMessage) return;
+
+  let debounceTimer = null;
+
+  // ── A. COMPANY INPUT LISTENER ───────────────────────────────────────────
+  companyInput.addEventListener("input", (e) => {
+    const inputValue = e.target.value.trim();
+    clearTimeout(debounceTimer);
+
+    if (!inputValue) {
+      suggestMessage.innerHTML = "";
+      return;
+    }
+
+    debounceTimer = setTimeout(async () => {
+      try {
+        const response = await fetch("/waitasec", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          // Send NAME explicitly; include token only if present
+          body: JSON.stringify({ NAME: inputValue, TOKEN: duplicatedToken || "" }),
+        });
+
+        if (!response.ok) {
+          console.error("HTTP Error:", response.statusText);
+          return;
+        }
+
+        const data = await response.json();
+        const companyData = data.company;
+        suggestMessage.innerHTML = ""; // Clear previous render
+
+        // Check if company_name array exists and has matches
+        if (companyData?.company_name && Array.isArray(companyData.company_name) && companyData.company_name.length > 0) {
+          const title = document.createElement("div");
+          title.className = "ambiguity-alert";
+          title.innerHTML = "If your company is already registered, pick the name below:";
+          suggestMessage.appendChild(title);
+
+          for (let i = 0; i < companyData.company_name.length; i++) {
+            const currentCompany = companyData.company_name[i];
+            const currentEmail = companyData.billing_email ? companyData.billing_email[i] : null;
+
+            const badge = document.createElement("span");
+            badge.className = "badge text-bg-warning me-1 mt-1 p-2";
+            badge.style.cursor = "pointer";
+            badge.textContent = currentEmail ? `${currentCompany} | ${currentEmail}` : `${currentCompany}`;
+
+            // Populate input field on badge click
+            badge.addEventListener("click", () => {
+              companyInput.value = currentCompany;
+              duplicatedData = data;
+              suggestMessage.innerHTML = ""; // Clear badges after selection
+            });
+
+            suggestMessage.appendChild(badge);
+          }
+        }
+      } catch (error) {
+        console.error("Fetch Error:", error);
+      }
+    }, 300);
+  });
+
+  // ── B. PHONE INPUT LISTENER ──────────────────────────────────────────────
+  phoneInput.addEventListener("input", (e) => {
+    const inputValue = e.target.value.trim();
+    clearTimeout(debounceTimer);
+
+    if (!inputValue) {
+      suggestMessage.innerHTML = "";
+      return;
+    }
+
+    debounceTimer = setTimeout(async () => {
+      try {
+        const response = await fetch("/waitasec", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ PHONE: inputValue, TOKEN: duplicatedToken || "" }),
+        });
+
+        if (!response.ok) {
+          console.error("HTTP Error:", response.statusText);
+          return;
+        }
+
+        const data = await response.json();
+        const userData = data.user;
+        suggestMessage.innerHTML = ""; // Clear previous render
+
+        // Check if existing user records match the phone number
+        if (userData?.id && Array.isArray(userData.id) && userData.id.length > 0) {
+          const tokenWrapper = document.createElement("div");
+          tokenWrapper.className = "mt-2";
+          tokenWrapper.innerHTML = `
+            <label class="question-text prevtoken d-block small mb-1">
+              If you already partially registered, add your last token number:
+            </label>
+            <input class="answer-field prevtoken form-control" placeholder="Enter Token No" />
+          `;
+          suggestMessage.appendChild(tokenWrapper);
+          duplicatedData = data;
+        }
+      } catch (error) {
+        console.error("Fetch Error:", error);
+      }
+    }, 300);
+  });
 }
 function clientAnswer(data) {
   if (Object.keys(data).length === 0) return;
   const questionArr = [];
   const answerArr = [];
+  const personalizedAnswers = [];
   const ambiguities = [];
   const formElement = document.getElementById(`form_${data.token}`);
-  const questions = formElement.querySelectorAll(".question-text");
-  const answers = formElement.querySelectorAll(".answer-field");
-
+  const personalizedQuestions = document.getElementById("personalizedQuestions");
+  const questions = formElement.querySelectorAll(".question-text.reqCategory");
+  const answers = formElement.querySelectorAll(".answer-field.reqCategory");
+  //Requirement Q & A
   questions.forEach((element) => {
     questionArr.push(element.textContent);
     ambiguities.push(element.id);
   });
   answers.forEach((element) => {
     answerArr.push(element.value.trim());
+  });
+
+  // Personalized Q & A
+  personalizedQuestions.querySelectorAll(".answer-field").forEach((element) => {
+    personalizedAnswers.push(element.value.trim());
   });
   console.log("Questions:", questionArr);
   console.log("Ambiguities:", ambiguities);
@@ -169,9 +357,10 @@ function clientAnswer(data) {
   //     answerArr.splice(idx, 1);
   //   }
   // });
-  return [questionArr, answerArr, ambiguities];
+  return [questionArr, answerArr, ambiguities, personalizedAnswers];
 }
-async function sendAnswers(res) { //Sending cooked JSON to Database
+async function sendAnswers(res) {
+  //Sending cooked JSON to Database
   try {
     const resplonse = await fetch("/api/database", {
       method: "POST",
@@ -259,61 +448,132 @@ function checkProgress(token) {
 // ── Submit all clarifications ─────────────────────────────────────────────
 function submitAll(token) {
   const textAreas = document.querySelectorAll(`.token-${token}`);
-  textAreas.forEach((input) => {
-    input.disabled = true;
-  });
-  const [questions, answers, ambiguities] = clientAnswer(DATA);
+  const [questions, answers, ambiguities, personalizedAnswers] = clientAnswer(DATA);
   const obj = {
-    questions: questions, //Array
-    answers: answers, //Array
-    ambiguities: ambiguities, //Array
+    questions: questions,
+    answers: answers,
+    ambiguities: ambiguities,
+    personalizedAnswers: personalizedAnswers,
+    duplicate: duplicatedData,
     session: {
-      status: DATA.status, //String
-      token: DATA.token, //String
-      label: DATA.label, //String
-      ambiguous: DATA.ambiguous, //int
-      reply: DATA.reply, //Object
+      status: DATA.status,
+      token: DATA.token,
+      label: DATA.label,
+      ambiguous: DATA.ambiguous,
+      reply: DATA.reply,
     },
   };
-  sendAnswers(obj); // Storing to DB
   const tokenMsg = document.createElement("div");
   tokenMsg.className = "msg msg--bot queued";
-  tokenMsg.innerHTML = `
-    <div class="msg-label">AIRE</div>
+
+  if (!personalizedAnswers.includes("")) {
+    document.getElementById("redirectToform").href = "form";
+
+    // ── SAFELY AUTO-FILL FORM INPUTS ──────────────────────────────────
+    const regForm = document.querySelector(".regForm");
+
+    // Only attempt to fill if the form element actually exists on the DOM
+    if (regForm && duplicatedData) {
+      // 1. Fill User Fields
+      if (duplicatedData.user && typeof duplicatedData.user === "object") {
+        Object.keys(duplicatedData.user).forEach((key) => {
+          const inputEl = regForm.querySelector(`.${key}`);
+          const valueArr = duplicatedData.user[key];
+
+          if (inputEl && valueArr) {
+            // Handle if value is an array or string
+            inputEl.value = Array.isArray(valueArr) ? valueArr[0] || "" : valueArr;
+          }
+        });
+      }
+
+      // 2. Fill Company Fields
+      if (duplicatedData.company && typeof duplicatedData.company === "object") {
+        Object.keys(duplicatedData.company).forEach((key) => {
+          const inputEl = regForm.querySelector(`.${key}`);
+          const valueArr = duplicatedData.company[key];
+
+          if (inputEl && valueArr) {
+            // Handle if value is an array or string
+            inputEl.value = Array.isArray(valueArr) ? valueArr[0] || "" : valueArr;
+          }
+        });
+      }
+    } else {
+      // If form is on a different page (e.g., redirecting to 'form'), save to localStorage
+      localStorage.setItem("duplicatedData", JSON.stringify(duplicatedData));
+    }
+    // ──────────────────────────────────────────────────────────────────
+
+    htmlStr = `
+    <div class="msg-label">AIRES</div>
     <div class="bubble">
-      ✅ Thank you, your clarifications have been recorded. A Business Analyst will review your requirement and we will follow up shortly. Your token number is <strong>#${token}</strong>.
+      ✅ Thank you <strong>${personalizedAnswers[0]}</strong>, your clarifications have been recorded. A Business Analyst will review your requirement and we will follow up shortly. Your token number is <strong>#${token}</strong>.
     </div>`;
+    sendAnswers(obj); // Storing to DB
+    textAreas.forEach((input) => {
+      input.disabled = true;
+    });
+  } else {
+    const personalizedQuestions = document.getElementById("personalizedQuestions");
+    personalizedQuestions.querySelectorAll(".answer-field").forEach((element) => {
+      element.style.border = "1px solid red";
+      document.getElementById("redirectToform").href = "#";
+    });
+    htmlStr = `
+    <div class="msg-label">AIRES</div>
+    <div class="bubble">
+      Please fill those required fields ⚠️
+    </div>`;
+  }
+
+  tokenMsg.innerHTML = htmlStr;
 
   const thread = document.getElementById("thread");
   thread.appendChild(tokenMsg);
   thread.scrollTop = thread.scrollHeight;
+
+  return personalizedAnswers;
 }
 
-// ── Skip ──────────────────────────────────────────────────────────────────
-function skipAll(token) {
-  const thread = document.getElementById("thread");
+// ── formSubmission ──────────────────────────────────────────────────────────────────
+async function formSubmission(token) {
+  const [Name, Phone, Company, Job] = submitAll(token);
+  const pastToken = document.querySelector(".answer-field.prevtoken");
+  let payload;
 
-  const skipMsg = document.createElement("div");
-  skipMsg.className = "msg msg--user";
-  skipMsg.innerHTML = `
-    <div class="msg-label">You</div>
-    <div class="bubble">I'll clarify these later.</div>`;
+  if (pastToken && pastToken.value.trim() !== "") {
+    payload = {
+      payloadStatus: 1,
+      tokenNo: pastToken.value.trim(),
+    };
+  } else {
+    payload = {
+      payloadStatus: 2,
+      tokenNo: token,
+      Name: Name,
+      Phone: Phone,
+      Company: Company,
+      Job: Job,
+    };
+  }
 
-  thread.appendChild(skipMsg);
+  try {
+    const response = await fetch("/form", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-  // Target the container by prefixed message ID
-  const botCard = document.getElementById(`msg-${token}`);
-  if (botCard) botCard.style.display = "none";
-
-  const tokenMsg = document.createElement("div");
-  tokenMsg.className = "msg msg--bot queued";
-  tokenMsg.innerHTML = `
-    <div class="msg-label">AIRE</div>
-    <div class="bubble">Understood. Your requirement has been saved with token <strong>#${token}</strong>.
-      Our team will reach out to clarify the open points.</div>`;
-
-  thread.appendChild(tokenMsg);
-  thread.scrollTop = thread.scrollHeight;
+    if (response.ok) {
+      const result = await response.json();
+      console.log("Server Response:", result);
+    } else {
+      console.error("Server returned non-200 status:", response.status);
+    }
+  } catch (error) {
+    console.error("Fetch Error:", error);
+  }
 }
 
 // BA_DASHBOARD---------------------------------------------------------------------------------------------

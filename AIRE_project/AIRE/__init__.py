@@ -2,7 +2,7 @@ import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
-
+app.config['SECRET_KEY'] = 'c9c98e71de7ede255622d858'
 # BASE_DIR evaluates to: ...\AIRE_project\AIRE
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
