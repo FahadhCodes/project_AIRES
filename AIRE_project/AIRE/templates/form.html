@@ -52,7 +52,7 @@
     </style>
   </head>
   <body>
-    <form method="POST" action="{{ url_for('form') }}" id="form_{{ form.session_id }}" class="regForm">
+    <form method="POST" action="{{ url_for('form') }}" id="form_{{ token }}" class="regForm">
       {{ form.hidden_tag() }}
 
       <!-- <div class="ambiguity-card"> -->

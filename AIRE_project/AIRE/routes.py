@@ -17,7 +17,7 @@ expects {"confidence": float, "label": str, "message": str} back.
 # from label_mapper import map_label_to_response
 # app = Flask(__name__)
 
-from flask import render_template, request, jsonify
+from flask import render_template, request, jsonify, redirect, url_for
 from flask_wtf import FlaskForm  # for form
 from wtforms import StringField, PasswordField, SubmitField, SelectField, URLField  # for form
 from wtforms.validators import Length, EqualTo, Email, DataRequired, ValidationError  # for Form Validation
@@ -127,14 +127,70 @@ class RegisterForm(FlaskForm):
             raise ValidationError('Entered Company Email is already in use.')
 
 
+@app.route("/fromRes")
+def response():
+    return redirect(url_for("response"))
+
+
+# @app.route("/form", methods=["POST", "GET"])
+# def form():
+#     data = request.get_json(silent=True) or {}
+#     payload_status = data.get("payloadStatus")  # Expecting integer 1 or 2
+#     token = str(data.get("tokenNo") or "").strip()
+
+#     initial_data = {}
+
+#     if payload_status == 2:
+#         initial_data = {
+#             "name": (data.get("Name") or "").strip(),
+#             "phone_number": (data.get("Phone") or "").strip(),
+#             "job_title": (data.get("Job") or "").strip(),
+#             "company_name": (data.get("Company") or "").strip(),
+#         }
+
+#     # Instantiate form passing token and extracted values
+#     myForm = RegisterForm(session_id=token, data=initial_data)
+
+#     if myForm.validate_on_submit():
+
+#         # 1. UPSERT Company
+#         company_record = Company.query.filter_by(session_id=token).first() or Company(session_id=token)
+#         company_record.company_name = myForm.company_name.data
+#         company_record.industry = myForm.industry.data
+#         company_record.company_size = myForm.company_size.data
+#         company_record.website_url = myForm.website_url.data
+#         company_record.billing_email = myForm.billing_email.data
+#         db.session.add(company_record)
+
+#         # Send pending operations to DB so company_record gets its .id populated
+#         db.session.flush()
+
+#         # 2. UPSERT User
+#         user_record = User.query.filter_by(session_id=token).first() or User(session_id=token)
+#         user_record.name = myForm.name.data
+#         user_record.phone_number = myForm.phone_number.data
+#         user_record.job_title = myForm.job_title.data
+#         user_record.email = myForm.email.data
+
+#         # Now company_record.id is guaranteed to have an integer value
+#         user_record.company_id = company_record.id
+
+#         db.session.add(user_record)
+#         db.session.commit()
+
+#         # return jsonify({"status": "success", "message": "Form submitted successfully!"})
+#         return redirect(url_for("fromRes"))
+
+#     return render_template("form.html", form=myForm)
+
 @app.route("/form", methods=["POST", "GET"])
 def form():
+    # 1. Handle incoming JSON payload if pre-filling from an external request
     data = request.get_json(silent=True) or {}
-    payload_status = data.get("payloadStatus")  # Expecting integer 1 or 2
-    token = str(data.get("tokenNo") or "").strip()
+    payload_status = data.get("payloadStatus")
+    token = str(data.get("tokenNo") or request.args.get("token") or "").strip()
 
     initial_data = {}
-
     if payload_status == 2:
         initial_data = {
             "name": (data.get("Name") or "").strip(),
@@ -143,13 +199,23 @@ def form():
             "company_name": (data.get("Company") or "").strip(),
         }
 
-    # Instantiate form passing token and extracted values
-    myForm = RegisterForm(session_id=token, data=initial_data)
+    # 2. Instantiate form properly
+    # If request is POST, Flask-WTF automatically picks up request.form.
+    # Otherwise (GET), pre-populate using formdata/initial_data.
+    if request.method == "POST":
+        myForm = RegisterForm()
+    else:
+        myForm = RegisterForm(data=initial_data)
 
+    # 3. Validate submission
     if myForm.validate_on_submit():
+        # Retrieve token from form if passed in hidden field, or fallback to token variable
+        token_val = token
 
         # 1. UPSERT Company
-        company_record = Company.query.filter_by(session_id=token).first() or Company(session_id=token)
+        company_record = Company.query.filter_by(
+            session_id=token_val
+        ).first() or Company(session_id=token_val)
         company_record.company_name = myForm.company_name.data
         company_record.industry = myForm.industry.data
         company_record.company_size = myForm.company_size.data
@@ -157,25 +223,25 @@ def form():
         company_record.billing_email = myForm.billing_email.data
         db.session.add(company_record)
 
-        # Send pending operations to DB so company_record gets its .id populated
         db.session.flush()
 
         # 2. UPSERT User
-        user_record = User.query.filter_by(session_id=token).first() or User(session_id=token)
+        user_record = User.query.filter_by(session_id=token_val).first() or User(
+            session_id=token_val
+        )
         user_record.name = myForm.name.data
         user_record.phone_number = myForm.phone_number.data
         user_record.job_title = myForm.job_title.data
         user_record.email = myForm.email.data
-
-        # Now company_record.id is guaranteed to have an integer value
         user_record.company_id = company_record.id
 
         db.session.add(user_record)
         db.session.commit()
 
-        return jsonify({"status": "success", "message": "Form submitted successfully!"})
+        # Successfully redirects after submission
+        return redirect(url_for("response"))
 
-    return render_template("form.html", form=myForm)
+    return render_template("form.html", form=myForm, token=token)
 
 
 @app.route("/dashboard")
