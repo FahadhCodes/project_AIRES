@@ -8,9 +8,9 @@ import joblib
 import scipy.sparse as sp
 
 
-with open('AIRE_project/AIRE/vocab.json', 'r') as f:  # change vocab.json to vocab1.json imple
+with open('project_AIRES/AIRES/vocab.json', 'r') as f:  # change vocab.json to vocab1.json imple
     Vocab = json.load(f)
-with open("AIRE_project/AIRE/edge_values.json", 'r') as f:
+with open("project_AIRES/AIRES/edge_values.json", 'r') as f:
     edge_values = json.load(f)
 nlp = spacy.load('en_core_web_md')
 
@@ -48,15 +48,15 @@ def brain():
     # 2. Disable oneDNN floating-point warning
     os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
     import keras  # noqa
-    BA_MODEL = joblib.load('AIRE_project/AIRE/ba_brain_model.pkl')
-    VOCAB_MODEL = joblib.load('AIRE_project/AIRE/ba_brain_tfidf.pkl')
-    AA_MODEL = keras.models.load_model("AIRE_project/AIRE/multitask_ambiguity_model.keras")
+    BA_MODEL = joblib.load('project_AIRES/AIRES/ba_brain_model.pkl')
+    VOCAB_MODEL = joblib.load('project_AIRES/AIRES/ba_brain_tfidf.pkl')
+    AA_MODEL = keras.models.load_model("project_AIRES/AIRES/multitask_ambiguity_model.keras")
     return BA_MODEL, VOCAB_MODEL, AA_MODEL
 
 
 nlp = spacy.load('en_core_web_md')
 
-with open('AIRE_project/AIRE/requirement_classifier.json', 'r') as f:
+with open('project_AIRES/AIRES/requirement_classifier.json', 'r') as f:
     requirement_classifier_df = json.load(f)
 requirement_classifier_df = pd.DataFrame(requirement_classifier_df)
 
@@ -94,7 +94,7 @@ def input_text(sent):
 
 
 def domain_keyword_features(text):
-    with open('AIRE_project/AIRE/domain_vocab.json', 'r') as f:
+    with open('project_AIRES/AIRES/domain_vocab.json', 'r') as f:
         domain_vocab = json.load(f)
     domain_vocab = pd.DataFrame(domain_vocab)
     text_lower = text.lower()

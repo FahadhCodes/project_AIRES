@@ -1,5 +1,5 @@
-from AIRE import app, db
-from AIRE.models import AmbiguityResult, Clarification, Sentence, Session, Company
+from AIRES import app, db
+from AIRES.models import AmbiguityResult, Clarification, Sentence, Session, Company
 with app.app_context():
     clarification_rows = Clarification.query.filter_by(session_id="5153241C").all()
     ambi = set()

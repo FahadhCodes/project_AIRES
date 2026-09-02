@@ -22,12 +22,12 @@ from flask_wtf import FlaskForm  # for form
 from wtforms import StringField, PasswordField, SubmitField, SelectField, URLField  # for form
 from wtforms.validators import Length, EqualTo, Email, DataRequired, ValidationError  # for Form Validation
 import uuid
-from AIRE import app, db
-from AIRE.vocab import Vocab
-from AIRE.query import reconstruct_payload, reconstruct_company_payload, company_query, user_query
-from AIRE.ml_engine import classify_requirement
-from AIRE.models import save_session_payload, Session, Sentence, Clarification, AmbiguityResult, Company, User
-from AIRE.label_mapper import map_label_to_response
+from AIRES import app, db
+from AIRES.vocab import Vocab
+from AIRES.query import reconstruct_payload, reconstruct_company_payload, company_query, user_query
+from AIRES.ml_engine import classify_requirement
+from AIRES.models import save_session_payload, Session, Sentence, Clarification, AmbiguityResult, Company, User
+from AIRES.label_mapper import map_label_to_response
 import json
 
 # In-memory store for submitted requirements (token -> data)

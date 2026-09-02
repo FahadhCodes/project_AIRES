@@ -13,7 +13,7 @@ Contract this function must honor (so app.py never needs to change):
     }
 """
 import random
-from AIRE.vocab import greet, Vocab, base_requirement_table, response_constructor, bot_response
+from AIRES.vocab import greet, Vocab, base_requirement_table, response_constructor, bot_response
 import json
 import spacy
 

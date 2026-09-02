@@ -5,7 +5,7 @@ BA Dashboard Database Schema
 
 from datetime import datetime
 import json
-from AIRE import db
+from AIRES import db
 
 # ── Table 1: Session ───────────────────────────────────────────────────────────
 # One record per client submission (one paragraph = one session)

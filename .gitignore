@@ -1,7 +1,7 @@
 .vscode
-AIRE_project/.venv
-AIRE_project/AIRE.egg-info/
-AIRE_project/pyproject.toml
+project_AIRES/.venv
+project_AIRES/AIRES.egg-info/
+project_AIRES/pyproject.toml
 *.db
 *.pyc
 *.toml

@@ -9,7 +9,7 @@ Example:
     Dictionary entry: {"3": "Please provide a specific target date."}
 """
 import random
-from AIRE.vocab import Vocab, greet
+from AIRES.vocab import Vocab, greet
 
 keys = list(Vocab["respons"]["question"].keys())  # Question Keys
 

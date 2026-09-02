@@ -11,4 +11,4 @@ DB_PATH = os.path.abspath(os.path.join(BASE_DIR, '..', 'instance', 'aire.db'))
 
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DB_PATH}"
 db = SQLAlchemy(app)
-from AIRE import routes  # noqa
+from AIRES import routes  # noqa

@@ -1,4 +1,4 @@
-from AIRE import app, db
+from AIRES import app, db
 
 if __name__ == "__main__":
     with app.app_context():

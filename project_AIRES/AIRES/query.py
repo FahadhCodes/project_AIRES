@@ -1,5 +1,5 @@
-from AIRE import app, db
-from AIRE.models import AmbiguityResult, Clarification, Sentence, Session, Company, User
+from AIRES import app, db
+from AIRES.models import AmbiguityResult, Clarification, Sentence, Session, Company, User
 import json
 
 with app.app_context():
