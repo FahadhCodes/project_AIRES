@@ -81,34 +81,34 @@ AIRES analyses raw requirement text submitted through a chatbot interface, class
 
 ```mermaid
 flowchart TB
-    subgraph CLIENT["🖥️ Client Layer"]
-        UI["index.html<br/>Chatbot UI"]
-        DASH["ba_dashboard.html<br/>BA Dashboard"]
-        CDASH["ba_dashboard_company.html<br/>Company Dashboard"]
-        FORM["form.html<br/>Registration Form"]
+    subgraph CLIENT["Client Layer"]
+        UI["index.html - Chatbot UI"]
+        DASH["ba_dashboard.html - BA Dashboard"]
+        CDASH["ba_dashboard_company.html - Company Dashboard"]
+        FORM["form.html - Registration Form"]
     end
 
-    subgraph JS["📜 Frontend Logic"]
-        CHATJS["chat.js<br/>Handles user input,<br/>renders bot replies"]
+    subgraph JS["Frontend Logic"]
+        CHATJS["chat.js - Handles user input, renders bot replies"]
     end
 
-    subgraph FLASK["⚙️ Flask Backend"]
-        ROUTES["routes.py<br/>API Endpoints"]
-        QUERY["query.py<br/>Payload Reconstruction"]
-        MAPPER["label_mapper.py<br/>Label → Response"]
+    subgraph FLASK["Flask Backend"]
+        ROUTES["routes.py - API Endpoints"]
+        QUERY["query.py - Payload Reconstruction"]
+        MAPPER["label_mapper.py - Label to Response"]
     end
 
-    subgraph ML["🧠 ML Engine"]
-        ENGINE["ml_engine.py<br/>classify_requirement()"]
-        GREET["vocab.py → greet()<br/>spaCy Similarity"]
-        BABRAIN["BA Brain<br/>TF-IDF + SVM"]
-        AMBIGUITY["Ambiguity Detector<br/>Keras Multi-Task DNN"]
-        SBERT["Sentence-Transformers<br/>all-MiniLM-L6-v2"]
+    subgraph ML["ML Engine"]
+        ENGINE["ml_engine.py - classify requirement"]
+        GREET["vocab.py greet - spaCy Similarity"]
+        BABRAIN["BA Brain - TF-IDF + SVM"]
+        AMBIGUITY["Ambiguity Detector - Keras Multi-Task DNN"]
+        SBERT["Sentence-Transformers - all-MiniLM-L6-v2"]
     end
 
-    subgraph DB["🗄️ Database"]
+    subgraph DB["Database"]
         SQLITE["SQLite via SQLAlchemy"]
-        MODELS["models.py<br/>ORM + save_session_payload()"]
+        MODELS["models.py - ORM + save session payload"]
     end
 
     UI --> CHATJS
@@ -129,7 +129,6 @@ flowchart TB
     ROUTES --> QUERY
     QUERY --> SQLITE
     FORM -- "POST /form" --> ROUTES
-    ROUTES --> MODELS
 
     style CLIENT fill:#0d1b2a,stroke:#00d4ff,color:#fff
     style JS fill:#1b2838,stroke:#ffa500,color:#fff
@@ -144,28 +143,28 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    INPUT["📝 Raw Requirement<br/>Paragraph"] --> SENT["Sentence Splitter<br/>spaCy sententizer()"]
+    INPUT["Raw Requirement Paragraph"] --> SENT["Sentence Splitter - spaCy sententizer"]
 
-    SENT --> BRANCH1["TF-IDF +<br/>Domain Keywords"]
-    SENT --> BRANCH2["Sentence Embedding<br/>all-MiniLM-L6-v2"]
+    SENT --> BRANCH1["TF-IDF + Domain Keywords"]
+    SENT --> BRANCH2["Sentence Embedding - all-MiniLM-L6-v2"]
 
-    BRANCH1 --> SVM["🎯 BA Brain<br/>SVM Classifier"]
-    SVM --> RTYPE["Requirement Type<br/>Functional | Security |<br/>Performance | Usability |<br/>Operational | Non-Functional"]
+    BRANCH1 --> SVM["BA Brain - SVM Classifier"]
+    SVM --> RTYPE["Requirement Type: Functional, Security, Performance, Usability, Operational"]
 
-    BRANCH2 --> DNN["🧠 Multi-Task DNN<br/>Keras Model"]
+    BRANCH2 --> DNN["Multi-Task DNN - Keras Model"]
 
-    DNN --> HEAD1["Head 1: HasAmbiguity<br/>Binary"]
-    DNN --> HEAD2["Head 2: Domain<br/>Telecom | Finance |<br/>E-commerce | Healthcare |<br/>Manufacturing"]
-    DNN --> HEAD3["Head 3: Ambiguity Subtypes<br/>Semantic | Scope | Actor"]
-    DNN --> HEAD4["Head 4: Process Execution<br/>Binary"]
+    DNN --> HEAD1["Head 1: HasAmbiguity - Binary"]
+    DNN --> HEAD2["Head 2: Domain - Telecom, Finance, E-commerce, Healthcare, Manufacturing"]
+    DNN --> HEAD3["Head 3: Ambiguity Subtypes - Semantic, Scope, Actor"]
+    DNN --> HEAD4["Head 4: Process Execution - Binary"]
 
-    RTYPE --> RESPONSE["📦 Structured Response"]
+    RTYPE --> RESPONSE["Structured Response"]
     HEAD1 --> RESPONSE
     HEAD2 --> RESPONSE
     HEAD3 --> RESPONSE
     HEAD4 --> RESPONSE
 
-    RESPONSE --> BOT["💬 Bot Reply +<br/>Clarification Questions"]
+    RESPONSE --> BOT["Bot Reply + Clarification Questions"]
 
     style INPUT fill:#0d1b2a,stroke:#00d4ff,color:#fff
     style SVM fill:#1a1a2e,stroke:#ffa500,color:#fff
@@ -212,7 +211,7 @@ flowchart LR
         SA["SQLAlchemy"]
     end
 
-    subgraph AI["AI / ML"]
+    subgraph AI_ML["AI and ML"]
         TF["TensorFlow"]
         KERAS["Keras"]
         SKLEARN["scikit-learn"]
@@ -227,13 +226,13 @@ flowchart LR
     end
 
     Frontend --> Backend
-    Backend --> AI
+    Backend --> AI_ML
     Backend --> Data
-    AI --> Data
+    AI_ML --> Data
 
     style Frontend fill:#0d1b2a,stroke:#00d4ff,color:#fff
     style Backend fill:#1a1a2e,stroke:#e94560,color:#fff
-    style AI fill:#16213e,stroke:#ffa500,color:#fff
+    style AI_ML fill:#16213e,stroke:#ffa500,color:#fff
     style Data fill:#1a1a2e,stroke:#53d769,color:#fff
 ```
 
@@ -252,41 +251,41 @@ erDiagram
     sentences ||--o{ ambiguity_results : "flagged with"
 
     sessions {
-        string token PK "e.g. F7B66843"
-        string status "clarify | resolved | pending"
-        string domain "E-commerce, Finance, etc."
-        int ambiguity_count "total ambiguous sentences"
-        text raw_paragraph "original client text"
+        string token PK
+        string status
+        string domain
+        int ambiguity_count
+        text raw_paragraph
         datetime submitted_at
         datetime updated_at
     }
 
     sentences {
         int id PK
-        string session_id FK "sessions.token"
-        int sentence_index "position in paragraph"
-        text raw_text "original sentence"
-        string requirement_type "Functional, Security, etc."
-        float confidence_score "BA Brain confidence"
+        string session_id FK
+        int sentence_index
+        text raw_text
+        string requirement_type
+        float confidence_score
         boolean has_ambiguity
         datetime created_at
     }
 
     ambiguity_results {
         int id PK
-        string session_id FK "sessions.token"
-        int sentence_id FK "sentences.id"
-        string ambiguity_type "Semantic | Scope | Actor | Process"
+        string session_id FK
+        int sentence_id FK
+        string ambiguity_type
         boolean detected
         datetime created_at
     }
 
     clarifications {
         int id PK
-        string session_id FK "sessions.token"
-        string ambiguity_type "which ambiguity this QA belongs to"
-        text question "question asked to client"
-        text answer "client response"
+        string session_id FK
+        string ambiguity_type
+        text question
+        text answer
         boolean answered
         datetime created_at
         datetime answered_at
@@ -294,7 +293,7 @@ erDiagram
 
     companies {
         int id PK
-        string session_id FK "sessions.token"
+        string session_id FK
         string company_name
         string industry
         string company_size
@@ -305,8 +304,8 @@ erDiagram
 
     users {
         int id PK
-        string session_id FK "sessions.token"
-        int company_id FK "companies.id"
+        string session_id FK
+        int company_id FK
         string name
         string phone_number
         string job_title
@@ -321,14 +320,14 @@ erDiagram
 
 ```mermaid
 flowchart LR
-    subgraph Pages["📄 Page Routes"]
+    subgraph Pages["Page Routes"]
         R1["GET /"]
         R2["GET /dashboard"]
         R3["GET /company-dashboard"]
-        R4["GET/POST /form"]
+        R4["GET-POST /form"]
     end
 
-    subgraph APIs["⚡ API Endpoints"]
+    subgraph APIs["API Endpoints"]
         A1["POST /api/chat"]
         A2["POST /api/database"]
         A3["POST /api/dashboard"]
@@ -466,10 +465,10 @@ python run.py
 
 ```mermaid
 flowchart LR
-    A["Jun 2026<br/>🗣️ Vocab Engine<br/>spaCy greeting<br/>detection"] --> B["Aug 10<br/>🧠 Ambiguity DNN<br/>Multi-task model<br/>trained"]
-    B --> C["Aug 20<br/>📦 Response Builder<br/>Structured dict +<br/>template responses"]
-    C --> D["Aug 24<br/>💬 UI Integration<br/>Chatbot ↔ Flask<br/>API connected"]
-    D --> E["Sep 2026<br/>🚀 MVP v1<br/>Dashboards + Forms<br/>+ SQLite + Ship"]
+    A["Jun 2026 - Vocab Engine, spaCy greeting detection"] --> B["Aug 10 - Ambiguity DNN, Multi-task model trained"]
+    B --> C["Aug 20 - Response Builder, Structured dict + templates"]
+    C --> D["Aug 24 - UI Integration, Chatbot and Flask API connected"]
+    D --> E["Sep 2026 - MVP v1, Dashboards + Forms + SQLite"]
 
     style A fill:#0d1b2a,stroke:#00d4ff,color:#fff
     style B fill:#16213e,stroke:#ffa500,color:#fff
