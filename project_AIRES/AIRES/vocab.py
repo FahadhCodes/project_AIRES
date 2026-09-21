@@ -319,3 +319,32 @@ def bot_response(final_dict, detailedPred):  # Collecting all of the ambiguities
 # final_dict = response_constructor(results_df)
 
 # print(bot_response(final_dict))
+
+RAW_REQ = [
+    """Hi We need a system for our company that handles customer applications across several branches. Staff should be able to review applications and approve them when everything is correct. Customers should be informed about the progress of their applications. Managers should be able to see which applications are still pending and take action when there are delays. The system should make the process secure and comply with the relevant rules.""",
+
+    """Hello Our company operates several production facilities and receives orders from many customers. The supervisors need to know which orders should be completed first and which machines are currently available. Workers should update the progress of their work, but sometimes an order needs to be moved to another production line. Management wants to understand delays and improve the overall production process.""",
+
+    """Good Morning We run several clinics and want to improve the way appointments are handled. Patients should be able to request appointments while staff manage the schedules of doctors. Sometimes doctors become unavailable and their appointments need to be changed. Patients should receive information about these changes and doctors should have access to the information required for their consultations.""",
+
+    """We provide services to customers who make regular payments through our platform. Customers should be able to view their transactions and receive notifications about unsuccessful payments. Employees need to review certain transactions and investigate problems when necessary. Managers want to see transaction activity and identify unusual cases.""",
+
+    """We operate an online marketplace with many sellers. Customers should be able to find products and place orders, while sellers need to manage the products they offer and update their orders. Administrators should handle problems reported by customers and monitor the performance of sellers. The company also wants reports to understand sales activity.""",
+
+    """Our hospital receives a large number of appointment requests every day through phone calls and the reception desk. We need a system where patients can book appointments with doctors and see available appointment times. Doctors should be able to view their schedules and reception staff should be able to create or change appointments on behalf of patients. If a doctor is unavailable, the system should manage the affected appointments and inform the patients. Hospital managers should also be able to see appointment statistics and identify doctors who have too many delayed appointments."""
+]
+
+RAW_REQ1 = ["Hiii", "Helloooo", "Gooood Morning"]
+RAW_REQ2 = ["Hi", "Hello", "Good Morning"]
+
+corpes = []
+avg_similarity = 0
+for x in RAW_REQ:
+    doc = nlp(x)
+    length = len(doc)
+    for i, token in enumerate(doc):
+        avg_similarity += greet(token.text)["max_similarity_value"]
+    print(avg_similarity/length, "|||||", length)
+    # corpes.append(doc)
+# print(corpes[0])
+# print([greet(x)["max_similarity_value"] for x in RAW_REQ])

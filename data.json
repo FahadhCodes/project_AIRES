@@ -1,1 +1,37 @@
-{"questions": ["What exactly should this feature include?", "Who should this requirement apply to?", "Are there any users, activities, or situations that should be excluded?", "Are there any limits or conditions on when this feature should be used?", "What should the system do outside the scope of this requirement?"], "answers": ["t exactly should this f", "should this requirement apply to?", "e any users, activities, or situations that should be excluded?", "re there any limits or conditions on wh", "re there any limits or conditions on wh"], "ambiguities": ["ScopeAmbiguity", "ScopeAmbiguity", "ScopeAmbiguity", "ScopeAmbiguity", "ScopeAmbiguity"], "personalizedAnswers": ["FAH", "53453545", "Ifs Inc", "BA"], "duplicate": {"company": {"billing_email": [null], "company_name": ["Ifs Inc"], "company_size": [null], "industry": [null], "website_url": [null]}, "user": {}}, "session": {"status": "clarify", "token": "24615BF0", "label": "question", "ambiguous": 4, "reply": {"DOMAIN": "Healthcare", "DETECTED_AMBIGUITES": ["ScopeAmbiguity"], "DESCRIPTION": "Your requirement has unclear boundaries, so it is not clear exactly what is included. ", "GROUPED_BY_AMBIGUITY": {"ScopeAmbiguity": "we need a system where patients can book appointments with doctors and see available appointment times. if a doctor is unavailable, the system should manage the affected appointments and inform the patients."}, "DETAILED_PREDICTIONS": "{\"Raw_requirement\":{\"0\":\"our hospital receives a large number of appointment requests every day through phone calls and the reception desk.\",\"1\":\"we need a system where patients can book appointments with doctors and see available appointment times.\",\"2\":\"doctors should be able to view their schedules and reception staff should be able to create or change appointments on behalf of patients.\",\"3\":\"if a doctor is unavailable, the system should manage the affected appointments and inform the patients.\",\"4\":\"hospital managers should also be able to see appointment statistics and identify doctors who have too many delayed appointments.\"},\"HasAmbiguity\":{\"0\":0,\"1\":1,\"2\":1,\"3\":1,\"4\":1},\"Domain\":{\"0\":\"Healthcare\",\"1\":\"Healthcare\",\"2\":\"Healthcare\",\"3\":\"Healthcare\",\"4\":\"Healthcare\"},\"requirement_type\":{\"0\":\"Performance\",\"1\":\"Functional\",\"2\":\"Functional\",\"3\":\"Functional\",\"4\":\"Functional\"},\"SemanticAmbiguity\":{\"0\":0,\"1\":0,\"2\":0,\"3\":0,\"4\":0},\"ScopeAmbiguity\":{\"0\":0,\"1\":1,\"2\":0,\"3\":1,\"4\":0},\"ActorAmbiguity\":{\"0\":0,\"1\":0,\"2\":0,\"3\":0,\"4\":0},\"ProcessExecutionAmbiguity\":{\"0\":0,\"1\":0,\"2\":0,\"3\":0,\"4\":0},\"confidance_scores\":{\"0\":0.7122,\"1\":0.8087,\"2\":0.8108,\"3\":0.9843,\"4\":0.9303}}"}}}
+{
+  "questions": [
+    "What exactly should this feature include?",
+    "Who should this requirement apply to?",
+    "Are there any users, activities, or situations that should be excluded?",
+    "Are there any limits or conditions on when this feature should be used?",
+    "What should the system do outside the scope of this requirement?"
+  ],
+  "answers": [
+    "t exactly should this f",
+    "should this requirement apply to?",
+    "e any users, activities, or situations that should be excluded?",
+    "re there any limits or conditions on wh",
+    "re there any limits or conditions on wh"
+  ],
+  "ambiguities": ["ScopeAmbiguity", "ScopeAmbiguity", "ScopeAmbiguity", "ScopeAmbiguity", "ScopeAmbiguity"],
+  "personalizedAnswers": ["FAH", "53453545", "Ifs Inc", "BA"],
+  "duplicate": {
+    "company": { "billing_email": [null], "company_name": ["Ifs Inc"], "company_size": [null], "industry": [null], "website_url": [null] },
+    "user": {}
+  },
+  "session": {
+    "status": "clarify",
+    "token": "24615BF0",
+    "label": "question",
+    "ambiguous": 4,
+    "reply": {
+      "DOMAIN": "Healthcare",
+      "DETECTED_AMBIGUITES": ["ScopeAmbiguity"],
+      "DESCRIPTION": "Your requirement has unclear boundaries, so it is not clear exactly what is included. ",
+      "GROUPED_BY_AMBIGUITY": {
+        "ScopeAmbiguity": "we need a system where patients can book appointments with doctors and see available appointment times. if a doctor is unavailable, the system should manage the affected appointments and inform the patients."
+      },
+      "DETAILED_PREDICTIONS": "{\"Raw_requirement\":{\"0\":\"our hospital receives a large number of appointment requests every day through phone calls and the reception desk.\",\"1\":\"we need a system where patients can book appointments with doctors and see available appointment times.\",\"2\":\"doctors should be able to view their schedules and reception staff should be able to create or change appointments on behalf of patients.\",\"3\":\"if a doctor is unavailable, the system should manage the affected appointments and inform the patients.\",\"4\":\"hospital managers should also be able to see appointment statistics and identify doctors who have too many delayed appointments.\"},\"HasAmbiguity\":{\"0\":0,\"1\":1,\"2\":1,\"3\":1,\"4\":1},\"Domain\":{\"0\":\"Healthcare\",\"1\":\"Healthcare\",\"2\":\"Healthcare\",\"3\":\"Healthcare\",\"4\":\"Healthcare\"},\"requirement_type\":{\"0\":\"Performance\",\"1\":\"Functional\",\"2\":\"Functional\",\"3\":\"Functional\",\"4\":\"Functional\"},\"SemanticAmbiguity\":{\"0\":0,\"1\":0,\"2\":0,\"3\":0,\"4\":0},\"ScopeAmbiguity\":{\"0\":0,\"1\":1,\"2\":0,\"3\":1,\"4\":0},\"ActorAmbiguity\":{\"0\":0,\"1\":0,\"2\":0,\"3\":0,\"4\":0},\"ProcessExecutionAmbiguity\":{\"0\":0,\"1\":0,\"2\":0,\"3\":0,\"4\":0},\"confidance_scores\":{\"0\":0.7122,\"1\":0.8087,\"2\":0.8108,\"3\":0.9843,\"4\":0.9303}}"
+    }
+  }
+}
