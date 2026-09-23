@@ -21,18 +21,23 @@ AIRES analyses raw requirement text submitted through a chatbot interface, class
 
 ## 📑 Table of Contents
 
-- [Screenshots](#-screenshots)
-- [Key Features](#-key-features)
-- [System Architecture](#-system-architecture)
-- [ML Pipeline](#-ml-pipeline)
-- [Tech Stack](#-tech-stack)
-- [ER Diagram](#-er-diagram)
-- [API Routes](#-api-routes)
-- [Project Structure](#-project-structure)
-- [Quick Start](#-quick-start)
-- [Target Users](#-target-users)
-- [Project Status](#-project-status)
-- [Development Timeline](#-development-timeline)
+- [🤖 AIRES](#-aires)
+    - [Artificial Intelligence Requirement Elicitation System](#artificial-intelligence-requirement-elicitation-system)
+  - [📑 Table of Contents](#-table-of-contents)
+  - [📸 Screenshots](#-screenshots)
+  - [✨ Key Features](#-key-features)
+  - [🏗️ System Architecture](#️-system-architecture)
+  - [🧠 ML Pipeline](#-ml-pipeline)
+    - [Neural Network Architecture (Netron)](#neural-network-architecture-netron)
+    - [Model Details](#model-details)
+  - [🛠️ Tech Stack](#️-tech-stack)
+  - [🗃️ ER Diagram](#️-er-diagram)
+  - [🔌 API Routes](#-api-routes)
+  - [📁 Project Structure](#-project-structure)
+  - [🚀 Quick Start](#-quick-start)
+  - [👥 Target Users](#-target-users)
+  - [📋 Project Status](#-project-status)
+  - [📅 Development Timeline](#-development-timeline)
 
 ---
 
@@ -68,7 +73,7 @@ AIRES analyses raw requirement text submitted through a chatbot interface, class
 
 | Feature                               | Description                                                                                                                           |
 | :------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------ |
-| 🧠 **Requirement Classification**     | SVM classifier with TF-IDF + domain keywords identifies requirement types (Functional, Security, Performance, Usability, Operational) |
+| 🧠 **Requirement Classification**     | LR classifier with TF-IDF + domain keywords identifies requirement types (Functional, Security, Performance, Usability, Operational) |
 | 🔍 **Multi-Task Ambiguity Detection** | Keras DNN with 4 output heads detects Semantic, Scope, Actor & Process Execution ambiguities                                          |
 | 💬 **Intelligent Chatbot**            | spaCy-powered greeting engine + structured clarification Q&A flow                                                                     |
 | 📊 **BA Dashboard**                   | Per-session & per-company analytics with requirement distribution charts and ambiguity flags                                          |
@@ -101,7 +106,7 @@ flowchart TB
     subgraph ML["ML Engine"]
         ENGINE["ml_engine.py - classify requirement"]
         GREET["vocab.py greet - spaCy Similarity"]
-        BABRAIN["BA Brain - TF-IDF + SVM"]
+        BABRAIN["BA Brain - TF-IDF + LR"]
         AMBIGUITY["Ambiguity Detector - Keras Multi-Task DNN"]
         SBERT["Sentence-Transformers - all-MiniLM-L6-v2"]
     end
@@ -148,8 +153,8 @@ flowchart LR
     SENT --> BRANCH1["TF-IDF + Domain Keywords"]
     SENT --> BRANCH2["Sentence Embedding - all-MiniLM-L6-v2"]
 
-    BRANCH1 --> SVM["BA Brain - SVM Classifier"]
-    SVM --> RTYPE["Requirement Type: Functional, Security, Performance, Usability, Operational"]
+    BRANCH1 --> LR["BA Brain - LR Classifier"]
+    LR --> RTYPE["Requirement Type: Functional, Security, Performance, Usability, Operational"]
 
     BRANCH2 --> DNN["Multi-Task DNN - Keras Model"]
 
@@ -167,7 +172,7 @@ flowchart LR
     RESPONSE --> BOT["Bot Reply + Clarification Questions"]
 
     style INPUT fill:#0d1b2a,stroke:#00d4ff,color:#fff
-    style SVM fill:#1a1a2e,stroke:#ffa500,color:#fff
+    style LR fill:#1a1a2e,stroke:#ffa500,color:#fff
     style DNN fill:#16213e,stroke:#e94560,color:#fff
     style RESPONSE fill:#1a1a2e,stroke:#53d769,color:#fff
     style BOT fill:#0d1b2a,stroke:#00d4ff,color:#fff
@@ -187,7 +192,7 @@ flowchart LR
 
 | Model                  | Algorithm                         | Input                 | Output                        | Artifacts                                             |
 | :--------------------- | :-------------------------------- | :-------------------- | :---------------------------- | :---------------------------------------------------- |
-| **BA Brain**           | SVM + TF-IDF + domain keywords    | Preprocessed sentence | Requirement type + confidence | `ba_brain_model.pkl`, `ba_brain_tfidf.pkl`            |
+| **BA Brain**           | LR + TF-IDF + domain keywords    | Preprocessed sentence | Requirement type + confidence | `ba_brain_model.pkl`, `ba_brain_tfidf.pkl`            |
 | **Ambiguity Detector** | Multi-task DNN (4 heads)          | Sentence embeddings   | Ambiguity flags per type      | `multitask_ambiguity_model.keras`, `edge_values.json` |
 | **Greeting Engine**    | Cosine similarity (spaCy vectors) | User message          | Greeting type + response      | `vocab.json`                                          |
 
@@ -385,7 +390,7 @@ Project/
         ├── label_mapper.py              ML label → human response
         ├── query.py                     DB → payload reconstruction
         │
-        ├── 🤖 ba_brain_model.pkl        trained SVM classifier
+        ├── 🤖 ba_brain_model.pkl        trained LR classifier
         ├── 🤖 ba_brain_tfidf.pkl        fitted TF-IDF vectoriser
         ├── 🤖 multitask_ambiguity_model.keras  multi-task Keras DNN
         ├── 📊 edge_values.json          decision thresholds
@@ -449,7 +454,7 @@ python run.py
 | Goal formulation & user stories                                   |    ✅ Done     |
 | Data model design (6 tables)                                      |    ✅ Done     |
 | Vocabulary & greeting engine (spaCy NLP)                          |    ✅ Done     |
-| Requirement type classifier (TF-IDF + SVM)                        |    ✅ Done     |
+| Requirement type classifier (TF-IDF + LR)                        |    ✅ Done     |
 | Multi-task ambiguity detector (Keras DNN + Sentence-Transformers) |    ✅ Done     |
 | Chatbot UI (HTML/CSS/JS ↔ Flask API)                              |    ✅ Done     |
 | BA Dashboard (per-session & per-company views)                    |    ✅ Done     |
